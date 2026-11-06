@@ -16,6 +16,15 @@ Property ProviderName As %String(MAXLEN = 50) [ InitialExpression = "openai", Re
 
 Property ModelName As %String(MAXLEN = 100) [ InitialExpression = "gpt-4o-mini", Required ];
 
+/// JSON field in the agent's reply that holds its decision.
+Property DecisionField As %String(MAXLEN = 50) [ InitialExpression = "decision", Required ];
+
+/// Comma-separated values the decision may take.
+Property AllowedDecisions As %String(MAXLEN = 500) [ Required ];
+
+/// Comma-separated decisions that a person must review.
+Property ReviewDecisions As %String(MAXLEN = 500);
+
 Property Enabled As %Boolean [ InitialExpression = 1 ];
 
 Property CreatedAt As %TimeStamp [ InitialExpression = {$ZDATETIME($HOROLOG, 3)} ];

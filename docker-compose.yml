@@ -1,0 +1,16 @@
+services:
+  iris:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: 
+      .env
+    restart: always
+    working_dir: /home/irisowner
+    environment:
+      - ISC_CPF_MERGE_FILE=/home/irisowner/dev/merge.cpf
+    ports:
+      - 1974:1972
+      - 52775:52773
+    volumes:
+      - ./:/home/irisowner/dev

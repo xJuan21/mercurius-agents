@@ -6,9 +6,41 @@ ClassMethod SeedAgents() As %Status
 {
     Do ##class(%File).CreateDirectoryChain("/home/irisowner/inbox/documents")
     Do ##class(%File).CreateDirectoryChain("/home/irisowner/inbox/alerts")
-    Set SC = ..SaveAgent("Scribe", "Documentation review", "You review technical notes. Reply only with JSON: {""decision"":""related|conflict|none"",""reason"":""one sentence""}", "decision", "related,conflict,none", "conflict")
+    Set SC = ..SaveAgent("Scribe", "Documentation review", "You guard technical documentation. Each new note is already saved and its node id is given. Use SearchKnowledge with its key terms and ignore the new node itself in the results. Only use ids returned by SearchKnowledge. If the note relates to an existing node use CreateRelationship with the new node first. If it contradicts one, use FlagConflict with the new node first. Your finding is a proposal for a person, not a fact. Finish by replying only with JSON: {""decision"":""related|conflict|none"",""reason"":""one sentence""}", "decision", "related,conflict,none", "conflict")
     Return:($$$ISERR(SC)) SC
-    Return ..SaveAgent("Sentinel", "Operational alerts", "You assess operational events. Reply only with JSON: {""severity"":""low|medium|high"",""action"":""one sentence""}", "severity", "low,medium,high", "high")
+    Set SC = ..SaveAgent("Sentinel", "Operational alerts", "You assess operational events. Use SearchKnowledge for known issues first. Then reply only with JSON: {""severity"":""low|medium|high"",""action"":""one sentence""}", "severity", "low,medium,high", "high")
+    Return:($$$ISERR(SC)) SC
+    For Tool = "SearchKnowledge", "CreateRelationship", "FlagConflict", "GetAgentMemory", "SaveAgentMemory" {
+        Set SC = ..Grant("Scribe", Tool)
+        Return:($$$ISERR(SC)) SC
+    }
+    Set SC = ..Grant("Sentinel", "SearchKnowledge")
+    Return:($$$ISERR(SC)) SC
+    Return ..ResetKnowledge()
+}
+
+ClassMethod Grant(pAgentName As %String, pToolKey As %String) As %Status
+{
+    Return:(##class(Mercurius.Model.AgentToolPermission).AgentToolIndexExists(pAgentName, pToolKey)) $$$OK
+    Set Permission = ##class(Mercurius.Model.AgentToolPermission).%New()
+    Set Permission.AgentName = pAgentName
+    Set Permission.ToolKey = pToolKey
+    Return Permission.%Save()
+}
+
+/// Restores the sample knowledge used by the demo.
+ClassMethod ResetKnowledge() As %Status
+{
+    Do ##class(Mercurius.Model.KnowledgeNode).%KillExtent()
+    Do ##class(Mercurius.Model.KnowledgeEdge).%KillExtent()
+    Do ##class(Mercurius.Model.KnowledgeConflict).%KillExtent()
+    Do ##class(Mercurius.Model.AgentMemory).%KillExtent()
+    Set Service = "Mercurius.Runtime.KnowledgeService"
+    Set SC = $CLASSMETHOD(Service, "SaveNode", "Scribe", "WhatsApp webhook runbook", "The WhatsApp webhook is exposed publicly through Tailscale Funnel.", "Document", .NodeId)
+    Return:($$$ISERR(SC)) SC
+    Set SC = $CLASSMETHOD(Service, "SaveNode", "Scribe", "IRIS backup policy", "Journals and databases on iris01 are backed up nightly.", "Document", .NodeId)
+    Return:($$$ISERR(SC)) SC
+    Return $CLASSMETHOD(Service, "SaveNode", "Sentinel", "Known issue: disk alerts", "Disk alerts on iris-dev usually mean journal growth.", "Issue", .NodeId)
 }
 
 ClassMethod SaveAgent(pName As %String, pRole As %String, pSystemPrompt As %String, pDecisionField As %String, pAllowedDecisions As %String, pReviewDecisions As %String) As %Status

@@ -3,7 +3,7 @@ Class Mercurius.Runtime.AgentExecutor Extends %RegisteredObject
 {
 
 /// Loads the named agent, sends it the input and returns the reply text.
-ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %String) As %Status
+ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %String, pExecutionId As %String = "") As %Status
 {
     Set SC = $$$OK
     Set pReply = ""
@@ -27,13 +27,34 @@ ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %
         Set:(Definition.Tone '= "") Agent.SystemPrompt = Agent.SystemPrompt_" Tone: "_Definition.Tone
         $$$ThrowOnError(Agent.%Init())
 
-        Set Session = Agent.CreateSession()
+        $$$ThrowOnError(..AttachTools(Agent, pAgentName, pExecutionId))
+
+        Set Session = Agent.CreateSession({"max_iterations":8})
         Set Response = Agent.Chat(Session, pInput)
         Set pReply = Response.Content
     } Catch Ex {
         Set SC = Ex.AsStatus()
     }
     Return SC
+}
+
+/// Binds the tools and policies to this agent. The LLM never supplies the agent's identity.
+ClassMethod AttachTools(pAgent As %AI.Agent, pAgentName As %String, pExecutionId As %String) As %Status
+{
+    Set Tools = ##class(Mercurius.Tools.Knowledge).%New()
+    Set Tools.AgentName = pAgentName
+    Set SC = pAgent.ToolManager.AddTool(Tools)
+    Return:($$$ISERR(SC)) SC
+
+    Set Policy = ##class(Mercurius.Runtime.ToolPolicy).%New()
+    Set Policy.AgentName = pAgentName
+    Set SC = pAgent.ToolManager.SetAuthPolicy(Policy)
+    Return:($$$ISERR(SC)) SC
+
+    Set Audit = ##class(Mercurius.Runtime.ToolAudit).%New()
+    Set Audit.AgentName = pAgentName
+    Set Audit.ExecutionId = pExecutionId
+    Return pAgent.ToolManager.SetAuditPolicy(Audit)
 }
 
 }

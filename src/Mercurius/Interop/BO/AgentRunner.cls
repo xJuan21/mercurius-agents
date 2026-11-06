@@ -22,7 +22,12 @@ Method Run(pRequest As Mercurius.Interop.Msg.AgentRequest, Output pResponse As M
     Set SC = Execution.%Save()
     Return:($$$ISERR(SC)) SC
 
-    Set SC = ##class(Mercurius.Runtime.AgentExecutor).Execute(pRequest.AgentName, pRequest.Payload, .Reply)
+    Set Input = pRequest.Payload
+    If (pRequest.EventType = "Document") {
+        Set SC = ##class(Mercurius.Runtime.KnowledgeService).SaveNode(pRequest.AgentName, pRequest.CorrelationId, pRequest.Payload, "Document", .NodeId)
+        Set:($$$ISOK(SC)) Input = "New note, already saved as node "_NodeId_":"_$CHAR(10)_pRequest.Payload
+    }
+    Set:($$$ISOK(SC)) SC = ##class(Mercurius.Runtime.AgentExecutor).Execute(pRequest.AgentName, Input, .Reply, pResponse.ExecutionId)
     If ($$$ISOK(SC)) {
         Set SC = ##class(Mercurius.Runtime.DecisionPolicy).Evaluate(pRequest.AgentName, Reply, .Decision, .NeedsReview)
     }

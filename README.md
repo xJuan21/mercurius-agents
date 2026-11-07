@@ -111,6 +111,17 @@ Point a Business Service at it with its `AgentName` setting.
 - Agents get no SQL, filesystem or shell tools.
 - The dashboard has no login and shows stored data. It's for local demos: don't expose it.
 
+## Gotchas found on build 109
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Container restarts with exit 134: `Unable to find/open file iris-main.log` | The repo is bind-mounted over the working directory, and the IRIS user can't write there | `working_dir: /home/irisowner` in `docker-compose.yml` |
+| `<PRIVATE METHOD>` from `ToolManager.AddToolSetInstance()` | The method is private | Use `ToolManager.AddTool(instance)`, which keeps instance properties through `Chat()` |
+| A tool hidden by `%CanList` isn't audited when called | The call fails as `ToolNotFound`, before `%CanExecute` and `%LogDenial` | Also check permissions in your own services |
+| `No repositories are configured` from `zpm` in another namespace | `enable -community` alone doesn't map the repositories | Also run `zpm "enable -map -repos -globally"` in `%SYS` |
+| Every `%CSP.REST` route returns the same output | A method named `Page` overrides `%CSP.Page` | Use another method name |
+| An API call fails on a `Role` column | `Role` is reserved in SQL | Quote it |
+
 ## Known limitations
 
 - Knowledge search is basic text matching, so related notes can be missed.

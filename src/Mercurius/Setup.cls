@@ -2,6 +2,14 @@
 Class Mercurius.Setup Extends %RegisteredObject
 {
 
+/// Called by IPM on install: seeds the agents and starts the production with the instance.
+ClassMethod Install() As %Status
+{
+    Set SC = ..SeedAgents()
+    Return:($$$ISERR(SC)) SC
+    Return ##class(Ens.Director).SetAutoStart("Mercurius.Interop.Production")
+}
+
 ClassMethod SeedAgents() As %Status
 {
     Do ##class(%File).CreateDirectoryChain("/home/irisowner/inbox/documents")

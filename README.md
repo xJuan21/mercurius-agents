@@ -39,7 +39,7 @@ An invalid or failed reply never gets accepted: it goes to review.
 - The **AI Hub Community** image, build `2027.1.0AI.109.0`, from the
   [EAP portal](https://evaluation.intersystems.com/Eval/early-access/AIHub).
   It can't be pulled from a registry, and this repo never publishes it.
-- An **OpenAI** API key. Variable: `OPENAI_API_KEY`. The default model is `gpt-4o-mini`.
+- An **OpenAI** API key. Variable: `OPENAI_API_KEY`. The default model is `gpt-4.1-mini`.
 
 ## Install
 

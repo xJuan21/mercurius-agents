@@ -14,7 +14,7 @@ Property Tone As %String(MAXLEN = 200);
 
 Property ProviderName As %String(MAXLEN = 50) [ InitialExpression = "openai", Required ];
 
-Property ModelName As %String(MAXLEN = 100) [ InitialExpression = "gpt-4o-mini", Required ];
+Property ModelName As %String(MAXLEN = 100) [ InitialExpression = "gpt-4.1-mini", Required ];
 
 /// JSON field in the agent's reply that holds its decision.
 Property DecisionField As %String(MAXLEN = 50) [ InitialExpression = "decision", Required ];

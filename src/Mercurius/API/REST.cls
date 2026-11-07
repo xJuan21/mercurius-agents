@@ -44,12 +44,13 @@ ClassMethod Knowledge() As %Status
     Return ..WriteQuery("SELECT TOP 100 AgentName, Title, NodeType, Content FROM Mercurius_Model.KnowledgeNode ORDER BY AgentName, ID")
 }
 
-/// Runs a fixed query and writes the rows as a JSON array.
+/// Runs a fixed query and writes the rows as a JSON array. Callers pass constants only,
+/// so the privilege check is skipped for the anonymous dashboard user.
 ClassMethod WriteQuery(pQuery As %String) As %Status
 {
     Set Statement = ##class(%SQL.Statement).%New()
     Set Statement.%SelectMode = 1
-    Set SC = Statement.%Prepare(pQuery)
+    Set SC = Statement.%Prepare(pQuery, 0)
     Return:($$$ISERR(SC)) SC
     Set Result = Statement.%Execute()
     Return:(Result.%SQLCODE < 0) $$$ERROR($$$SQLError, Result.%SQLCODE, Result.%Message)

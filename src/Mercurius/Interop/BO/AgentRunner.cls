@@ -38,7 +38,7 @@ Method Run(pRequest As Mercurius.Interop.Msg.AgentRequest, Output pResponse As M
         Set pResponse.NeedsReview = NeedsReview
     } Else {
         Set pResponse.Status = "Failed"
-        Set pResponse.ErrorMessage = $SYSTEM.Status.GetErrorText(SC)
+        Set pResponse.ErrorMessage = ##class(Mercurius.Runtime.AgentExecutor).Redact($SYSTEM.Status.GetErrorText(SC))
         $$$LOGWARNING("Agent run failed: "_pResponse.ErrorMessage)
     }
 

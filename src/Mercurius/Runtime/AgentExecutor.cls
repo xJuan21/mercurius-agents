@@ -57,4 +57,16 @@ ClassMethod AttachTools(pAgent As %AI.Agent, pAgentName As %String, pExecutionId
     Return pAgent.ToolManager.SetAuditPolicy(Audit)
 }
 
+/// Removes API keys from text before it's logged or stored. Providers can echo them in errors.
+ClassMethod Redact(pText As %String) As %String
+{
+    Set Text = pText
+    For KeyName = "OPENAI_API_KEY", "ANTHROPIC_API_KEY" {
+        Set Key = $SYSTEM.Util.GetEnviron(KeyName)
+        Set:(Key '= "") Text = $REPLACE(Text, Key, "[REDACTED]")
+    }
+    Set Matcher = ##class(%Regex.Matcher).%New("sk-[A-Za-z0-9_\-]{8,}", Text)
+    Return Matcher.ReplaceAll("[REDACTED]")
+}
+
 }

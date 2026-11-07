@@ -32,6 +32,9 @@ ClassMethod Run() As %Boolean
     Do $CLASSMETHOD(Policy, "Evaluate", "Scribe", "not json", .Decision, .NeedsReview)
     Set Passed = ..Check("Malformed reply goes to review", NeedsReview) && Passed
 
+    Set Redacted = ##class(Mercurius.Runtime.AgentExecutor).Redact("Incorrect API key provided: sk-proj-abc123DEF456")
+    Set Passed = ..Check("API keys are removed from stored errors", '(Redacted [ "abc123DEF456") && (Redacted [ "[REDACTED]")) && Passed
+
     Write !, $SELECT(Passed:"ALL PASSED", 1:"FAILURES"), !
     Return Passed
 }

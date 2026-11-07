@@ -101,6 +101,22 @@ Add a row to `Mercurius.Model.AgentDefinition` with its prompt, `DecisionField`,
 `Mercurius.Model.AgentToolPermission`. See `Mercurius.Setup`. No new class is needed.
 Point a Business Service at it with its `AgentName` setting.
 
+## Why not `EnsLib.AI.Agent.PassthroughOperation`?
+
+IRIS ships an experimental operation and adapter for calling an agent from a production.
+We tested them on build 109 and kept our own `AgentRunner` operation.
+
+| | `EnsLib.AI.Agent.*` | `AgentRunner` |
+|---|---|---|
+| Agent configuration | Built once per production item, at startup | Loaded from a stored record on each message |
+| Agents per item | One | Any |
+| Per-agent tool identity | Not with settings alone: `AuthPolicy` is created with a bare `%New()` | Set by the runtime |
+| A failed LLM call | Message error | Recorded result, routed to review |
+| Message trace | Persistent `LLMResponse` with usage | Our own message classes |
+
+Subclassing the adapter and using its `OnAfterAgentInit` hook does give per-agent tools,
+so it's a possible later direction once the classes are no longer experimental.
+
 ## Security
 
 - The runtime binds each tool to its agent, so the LLM never supplies the agent's identity.
@@ -127,5 +143,6 @@ Point a Business Service at it with its `AgentName` setting.
 - Knowledge search is basic text matching, so related notes can be missed.
 - A conflict is an AI finding, not a verified fact. There's no review screen yet.
 - An LLM call that hangs has no timeout of its own.
+- API keys are redacted from stored errors. Other sensitive text in an error is not.
 - Agents are created in code or SQL. There's no create form yet.
 - AI Hub is pre-release software.

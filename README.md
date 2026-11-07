@@ -1,148 +1,120 @@
-# AI Hub Dev Template
+# Mercurius Agents
 
-This repo provides a template to kickstart development with AI Hub. 
+Configurable AI agents that make decisions inside InterSystems IRIS Interoperability
+productions, built on IRIS AI Hub.
 
-## Contents
+Agents are stored records, not generated classes. One runtime runs them all. Each agent has
+its own instructions, permitted tools, private knowledge and memory. Its decision then
+routes a real message through a production.
 
-- **./skills** - agent skills with information on using AI hub for AI agents. Move these to a suitable location for your preferred AI coding agent. 
-- **./src/Sample** - Basic sample classes for tools, toolsets, agents and MCP servers. These are installed with zpm when the container is build.  
-- **./src/Python** - An example stdio MCP server defined in Python and used in the IRIS Toolsets 
+## What it does
 
-## Using the template
+A document arrives at a Business Service. The **Scribe** agent searches its private
+knowledge and decides whether the document relates to, or contradicts, what it already
+knows. A contradiction is recorded as an open finding and routed to review. Alerts follow
+the same production and code, but reach the **Sentinel** agent, which has different
+instructions and tools.
 
-### Download AI Hub Container
+```text
+File inbox -> DocumentIngress / AlertIngress (BS)
+                   |
+             AgentWorkflow (BP) -> AgentRunner (BO) -> AI Hub agent + permitted tools
+                   |
+          validated decision routes the message
+                   |
+      +------------+------------+
+      v                         v
+ ResultHandler (BO)        ReviewQueue (BO)
+```
 
-1. Download an AI Hub container from the [Early Access Program Portal](https://evaluation.intersystems.com/Eval/early-access/AIHub). The docker-containers end with `docker.tar.gz`, ensure you choose the version suitable for your operating system (arm64 for macOS).
+| Deterministic code | AI judgment |
+|---|---|
+| Saving documents, checking tool permissions, enforcing ownership, validating the decision against allowed values, routing | Choosing search terms, comparing notes, proposing a decision |
 
+An invalid or failed reply never gets accepted: it goes to review.
 
-2. Load the image with: 
+## Requirements
 
-    ```bash
-    docker load -i /path/to/iris-community-2026.3.0AI.154.0-docker.tar.gz
-    ```
+- Docker with Compose
+- The **AI Hub Community** image, build `2027.1.0AI.109.0`, from the
+  [EAP portal](https://evaluation.intersystems.com/Eval/early-access/AIHub).
+  It can't be pulled from a registry, and this repo never publishes it.
+- An **OpenAI** API key. Variable: `OPENAI_API_KEY`. The default model is `gpt-4o-mini`.
 
-    Once it's complete you should see `Loaded image: docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2026.3.0AI.154.0` (if not you can use `docker images` to find the image name). 
+## Install
 
-3. Change the Image name in the [Dockerfile](./Dockerfile) to match your version and operating system (image name printed above).
-
-
-### Build Template Repo
-
-4. Clone this repo: 
+Load the image and give it the short tag used by the Dockerfile:
 
 ```bash
-git clone https://github.com/intersystems-community/ai-hub-dev-template
-cd ai-hub-dev-template
+docker image load -i iris-community-2027.1.0AI.109.0-docker.tar.gz
+docker tag docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2027.1.0AI.109.0 iris-community:2027.1.0AI.109.0
 ```
 
-5. Add an OPENAI_API_KEY to a file called .env in this repo. You can see an example in .env.example. If you want to use another provider, change the Sample.Agent class in src/. If you don't want to use any agents at the moment (e.g. you want to create MCP tools to access from outside the container), create an empty .env file (`touch .env`) or remove the `env_file` tag from [docker-compose.yml](./docker-compose.yml)
-
-6. Build the container with: 
+Clone, add your key and start:
 
 ```bash
-docker-compose up -d --build 
+git clone https://github.com/xJuan21/mercurius-agents.git
+cd mercurius-agents
+cp .env.example .env      # then put your key in .env
+docker compose up -d --build
 ```
 
-## Using IRIS AI Hub Container
+The build compiles the code, seeds the sample agents and sets the production to start
+with IRIS.
 
->[!CAUTION]
-> In the container start-up, the `Sample` directory is installed with IPM/ZPM. If you want to use this template for your own development and want to delete this directory, ensure you edit the module.xml file to remove the Sample directory and invocation, or remove the iris.script `zpm load` command.
-
-### Accessing IRIS 
-
-You can find the Management Portal at http://localhost:52773/csp/sys/UtilHome.csp.
-
-Login with: 
-    - SuperUser / SYS
-
-You can access the IRIS Terminal with:
-
-```objectscript
-docker-compose exec -it iris iris session iris
-```
-
-or the bash terminal with:
+## Verify
 
 ```bash
-docker-compose exec -it iris bash
+docker compose ps                                        # shows (healthy)
+curl -s http://localhost:52775/mercurius/api/agents      # lists Scribe and Sentinel
 ```
 
-### Testing Sample agent 
-
-There is a basic agent in src/Sample.Agent, a simple way to use it from objectscript is to run the following (note this does require an OPENAI_API_KEY to be added to .env before running th container). 
-
-```objectscript
-zn "IRISAPP"
-Set agent = ##class(Sample.Agent).%New()
-Set sc = agent.%Init()
-write:sc'=1 $SYSTEM.Status.GetErrorText(sc), !
-
-Set session = agent.CreateSession()
-
-Set request = "What tools do you have?"
-Set response = agent.Chat(session, request)
-Do ##class(%AI.System).RenderMarkdown(response.Content)
-```
-
-You can also use the agents in streaming mode as follows: 
-
-```objectscript
-// Create Stream Renderer
-Set renderer = ##class(%AI.Shell.StreamRenderer).%New()
-
-// Request requires using both tools defined in Sample.Tools and packaged in Sample.ToolSet
-Set request = "Add a person named Peter aged 16, and then get people younger than 35."
-
-// Stream Response
-Set response = agent.StreamChat(session, request , renderer, "OnChunk")
-
-```
-
-### Try an interactive Chat Shell
-
-```objectscript
-do ##class(%AI.System).Shell("openai", $System.Util.GetEnviron("OPENAI_API_KEY"), "gpt-5-nano", "Sample.ToolSet")
-```
-
-### Test MCP Server
-
-The build process installs an MCP server web application at http://localhost:52773/mcp/sample. You can check this MCP server is running by going to http://localhost:52773/mcp/sample/v1/services. 
-
-For the MCP Server to be usable, there is an additional step of starting this via a Rust binary which connects to IRIS through the web gateway protocol. The Binary is installed in `/usr/irissys/bin` (should already be in PATH).  
-
-A sample configuration is shown in [config_html.toml](./config_http.toml), which serves a remote HTTP server on port 8080 (which is exposed by the docker-compose file). **Please note, the port for the remote HTTP server is not the same as the web server port!** 
-
-A second sample configuration is shown for a local stdio server in [config_stdio.html](./config_stdio.toml). Note, stdio servers require the agent to be running on the same machine as the `iris-mcp-server` binary, making it trickier to use with containers, as such the full instructions to use this are not included here.
-
-#### HTTP 
-
-To start the transport, open a bash terminal within the container: 
+Backend checks, no LLM needed:
 
 ```bash
-docker-compose exec -it iris bash 
+echo 'Do ##class(Mercurius.Test.Acceptance).Run() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
 ```
 
-Then start the `iris-mcp-server`
+This writes test records, and `demo/run.sh` resets them.
 
-```bash 
-iris-mcp-server -c config.toml run 
-```
-
-You can now connect the MCP server to your MCP Client of choice (e.g. coding agents like claude code) using the address: http://localhost:8080/mcp/sample. 
-
-An example python MCP client is shown in [test_mcp.py](./test_mcp.py), which uses Langchain's MCP adapters module. To try this, run: 
+## Run the demo
 
 ```bash
-pip install langchain-mcp-adapters
-python test_mcp.py
+./demo/run.sh
 ```
 
+It sends three documents and an alert through the production and prints each decision.
+LLM judgment varies between runs.
 
+| Where | URL |
+|---|---|
+| Dashboard (read-only) | http://localhost:52775/mercurius/ |
+| Production and message traces | http://localhost:52775/csp/sys/UtilHome.csp |
 
-## More Info 
+The portal uses `_SYSTEM` and the image default password. Open **Interoperability →
+View → Messages** to see the trace, or use the session number shown by the demo.
 
-For more information on this template and AI Hub in general, see some of the following: 
-- [An Introduction to AI Hub, Part 1: Agents in ObjectScript | ISC Developer Community ](https://community.intersystems.com/post/introduction-ai-hub-part-1-agents-objectscript) and [Part 2: Custom MCP Servers | ISC Developer Community](https://community.intersystems.com/post/introduction-ai-hub-part-2-custom-mcp-servers)
-- [ai-hub-eap](https://github.com/intersystems-community/ai-hub-eap/tree/master) for documentation and bug reporting
-- [Building AI Applications with InterSystems AI Hub | Learning Service (4 mins)](https://learning.intersystems.com/course/view.php?id=2872)
+## Add an agent
 
+Add a row to `Mercurius.Model.AgentDefinition` with its prompt, `DecisionField`,
+`AllowedDecisions` and `ReviewDecisions`, then grant tools in
+`Mercurius.Model.AgentToolPermission`. See `Mercurius.Setup`. No new class is needed.
+Point a Business Service at it with its `AgentName` setting.
+
+## Security
+
+- The runtime binds each tool to its agent, so the LLM never supplies the agent's identity.
+- `Mercurius.Runtime.ToolPolicy` checks every tool against the agent's grants, and
+  ungranted tools aren't shown to the LLM.
+- `KnowledgeService` enforces ownership, so relationships can't cross agents.
+- Every tool call is audited in `Mercurius.Model.AgentToolCall`.
+- Agents get no SQL, filesystem or shell tools.
+- The dashboard has no login and shows stored data. It's for local demos: don't expose it.
+
+## Known limitations
+
+- Knowledge search is basic text matching, so related notes can be missed.
+- A conflict is an AI finding, not a verified fact. There's no review screen yet.
+- An LLM call that hangs has no timeout of its own.
+- Agents are created in code or SQL. There's no create form yet.
+- AI Hub is pre-release software.

@@ -7,7 +7,28 @@ ClassMethod Install() As %Status
 {
     Set SC = ..SeedAgents()
     Return:($$$ISERR(SC)) SC
+    Set SC = ..CreateWebApp()
+    Return:($$$ISERR(SC)) SC
     Return ##class(Ens.Director).SetAutoStart("Mercurius.Interop.Production")
+}
+
+/// Creates the read-only dashboard at /mercurius/.
+ClassMethod CreateWebApp() As %Status
+{
+    New $NAMESPACE
+    Set $NAMESPACE = "%SYS"
+    Set Role = "MercuriusReader"
+    If ('##class(Security.Roles).Exists(Role)) {
+        Set SC = ##class(Security.Roles).Create(Role, "Read-only Mercurius dashboard", "%DB_IRISAPP_DATA:R,%DB_IRISAPP_CODE:R")
+        Return:($$$ISERR(SC)) SC
+    }
+    Return:(##class(Security.Applications).Exists("/mercurius")) $$$OK
+    Set Properties("NameSpace") = "IRISAPP"
+    Set Properties("DispatchClass") = "Mercurius.API.REST"
+    Set Properties("AutheEnabled") = 64
+    Set Properties("MatchRoles") = ":"_Role
+    Set Properties("Enabled") = 1
+    Return ##class(Security.Applications).Create("/mercurius", .Properties)
 }
 
 ClassMethod SeedAgents() As %Status

@@ -60,12 +60,22 @@ ClassMethod FlagConflict(pAgentName As %String, pSourceId As %Integer, pTargetId
 {
     Set SC = ..CheckOwner(pAgentName, pSourceId, pTargetId)
     Return:($$$ISERR(SC)) SC
+    Return:(..HasOpenConflict(pAgentName, pSourceId, pTargetId)) $$$OK
     Set Conflict = ##class(Mercurius.Model.KnowledgeConflict).%New()
     Set Conflict.AgentName = pAgentName
     Set Conflict.SourceNodeId = pSourceId
     Set Conflict.TargetNodeId = pTargetId
     Set Conflict.Description = pDescription
     Return Conflict.%Save()
+}
+
+/// True when the pair already has an open conflict, in either direction.
+ClassMethod HasOpenConflict(pAgentName As %String, pFirstId As %Integer, pSecondId As %Integer) As %Boolean
+{
+    Set Query = "SELECT COUNT(*) AS Total FROM Mercurius_Model.KnowledgeConflict WHERE AgentName = ? AND Status = 'Open' AND ((SourceNodeId = ? AND TargetNodeId = ?) OR (SourceNodeId = ? AND TargetNodeId = ?))"
+    Set Statement = ##class(%SQL.Statement).%ExecDirect(, Query, pAgentName, pFirstId, pSecondId, pSecondId, pFirstId)
+    Do Statement.%Next()
+    Return (Statement.Total > 0)
 }
 
 /// Both nodes must exist and belong to the agent.

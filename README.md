@@ -62,6 +62,18 @@ docker compose up -d --build
 The build compiles the code, seeds the sample agents and sets the production to start
 with IRIS.
 
+### Install with IPM
+
+On an IRIS AI Hub instance, build `2027.1.0AI.109.0`:
+
+```objectscript
+zpm "install mercurius-agents"
+```
+
+This installs the backend: agents, production, API and sign-in. The web UI is built by Docker,
+so use the Docker install above for the full app. IRIS needs `OPENAI_API_KEY` in its
+environment.
+
 ## Verify
 
 ```bash

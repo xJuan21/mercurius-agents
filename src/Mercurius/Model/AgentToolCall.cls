@@ -10,6 +10,8 @@ Property ToolKey As %String(MAXLEN = 100);
 
 Property Arguments As %String(MAXLEN = 2000);
 
+Property ResultPreview As %String(MAXLEN = 500);
+
 Property Outcome As %String(MAXLEN = 20, VALUELIST = ",Completed,Failed,Denied");
 
 Property CreatedAt As %TimeStamp [ InitialExpression = {$ZDATETIME($HOROLOG, 3)} ];

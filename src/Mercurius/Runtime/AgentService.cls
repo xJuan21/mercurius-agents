@@ -23,6 +23,9 @@ ClassMethod Validate(pBody As %DynamicObject, pIsNew As %Boolean) As %String
         }
     }
 
+    Set Problem = ##class(Mercurius.Runtime.RulesEngine).Validate(pBody.fallbackRules, Allowed)
+    Return:(Problem '= "") Problem
+
     If ($ISOBJECT(pBody.tools)) {
         Set Iterator = pBody.tools.%GetIterator()
         While (Iterator.%GetNext(.Key, .ToolKey)) {
@@ -49,6 +52,7 @@ ClassMethod Save(pBody As %DynamicObject, pName As %String = "") As %Status
     Set Definition.Tone = pBody.tone
     Set Definition.AllowedDecisions = ..CleanList(pBody.allowedDecisions)
     Set Definition.ReviewDecisions = ..CleanList(pBody.reviewDecisions)
+    Set Definition.FallbackRules = pBody.fallbackRules
     Set:(pBody.%IsDefined("enabled")) Definition.Enabled = +pBody.enabled
     Set SC = Definition.%Save()
     Return:($$$ISERR(SC)) SC

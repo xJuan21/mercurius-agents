@@ -16,6 +16,14 @@ Property Result As %String(MAXLEN = "");
 
 Property SessionId As %Integer;
 
+Property Engine As %String(MAXLEN = 10);
+
+Property PromptTokens As %Integer;
+
+Property CompletionTokens As %Integer;
+
+Property CostUSD As %Numeric(SCALE = 6);
+
 Property ErrorMessage As %String(MAXLEN = 2000);
 
 }

@@ -39,6 +39,22 @@ ClassMethod Run() As %Boolean
     Set Bad = ##class(Mercurius.Runtime.AgentService).Validate({"name":"Atlas","role":"x","instructions":"y","allowedDecisions":"a","tools":["RunShell"]}, 1)
     Set Passed = ..Check("Unknown tool rejected", Bad '= "") && Passed
 
+    Set Definition = ##class(Mercurius.Model.AgentDefinition).%New()
+    Set Definition.FallbackRules = "instead of => conflict"_$CHAR(10)_"also => related"
+    Set Decision = ##class(Mercurius.Runtime.RulesEngine).Evaluate(Definition, "We use Cloudflare INSTEAD OF Funnel", .Rule)
+    Set None = ##class(Mercurius.Runtime.RulesEngine).Evaluate(Definition, "Lunch on Friday", .Rule)
+    Set Passed = ..Check("Fallback rules decide when they match, and only then", (Decision = "conflict") && (None = "")) && Passed
+    Set Problem = ##class(Mercurius.Runtime.RulesEngine).Validate("anything => approve", "related,conflict,none")
+    Set Passed = ..Check("Fallback rule with an unknown decision is rejected", Problem '= "") && Passed
+
+    Do $CLASSMETHOD(Service, "SaveNode", "Sentinel", "Sentinel private", "x", "Note", .OtherId)
+    Set Foreign = ##class(Mercurius.Runtime.ActionService).ProposeKnowledgeUpdate("Documenter", "", OtherId, "new", "test")
+    Set Passed = ..Check("An agent can't propose changes to another agent's note", $$$ISERR(Foreign)) && Passed
+    Do ##class(Mercurius.Runtime.ActionService).Propose("Sentinel", "", "Notify", {"message":"test"}, "test", .ProposalId)
+    Set First = ##class(Mercurius.Runtime.ActionService).Decide(ProposalId, "Rejected", "tester")
+    Set Second = ##class(Mercurius.Runtime.ActionService).Decide(ProposalId, "Rejected", "tester")
+    Set Passed = ..Check("A decided proposal can't be decided again", (First = "") && (Second '= "")) && Passed
+
     Set Redacted = ##class(Mercurius.Runtime.AgentExecutor).Redact("Incorrect API key provided: sk-proj-abc123DEF456")
     Set Passed = ..Check("API keys are removed from stored errors", '(Redacted [ "abc123DEF456") && (Redacted [ "[REDACTED]")) && Passed
 

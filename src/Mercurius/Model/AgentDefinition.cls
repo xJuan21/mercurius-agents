@@ -31,6 +31,9 @@ Property InputType As %String(MAXLEN = 20, VALUELIST = ",Document,Event") [ Init
 /// Icon key used by the web UI.
 Property Symbol As %String(MAXLEN = 20) [ InitialExpression = "agents" ];
 
+/// Used when the AI can't answer: one rule per line, written as phrase => decision.
+Property FallbackRules As %String(MAXLEN = 4000);
+
 Property Enabled As %Boolean [ InitialExpression = 1 ];
 
 Property CreatedAt As %TimeStamp [ InitialExpression = {$ZDATETIME($HOROLOG, 3)} ];

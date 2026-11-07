@@ -23,6 +23,9 @@ XData ProductionDefinition
     <Setting Target="Adapter" Name="FileSpec">*</Setting>
   </Item>
   <Item Name="ChatIngress" ClassName="Mercurius.Interop.BS.ChatIngress" PoolSize="0" Enabled="true"/>
+  <Item Name="ActionIngress" ClassName="Mercurius.Interop.BS.ActionIngress" PoolSize="0" Enabled="true"/>
+  <Item Name="Notifier" ClassName="Mercurius.Interop.BO.Notifier" PoolSize="1" Enabled="true"/>
+  <Item Name="KnowledgeUpdater" ClassName="Mercurius.Interop.BO.KnowledgeUpdater" PoolSize="1" Enabled="true"/>
   <Item Name="AgentWorkflow" ClassName="Mercurius.Interop.BP.AgentWorkflow" PoolSize="1" Enabled="true"/>
   <Item Name="AgentRunner" ClassName="Mercurius.Interop.BO.AgentRunner" PoolSize="1" Enabled="true"/>
   <Item Name="ResultHandler" ClassName="Mercurius.Interop.BO.ResultHandler" PoolSize="1" Enabled="true"/>

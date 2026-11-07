@@ -21,6 +21,9 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
   <Route Url="/executions" Method="GET" Call="ListExecutions"/>
   <Route Url="/conflicts" Method="GET" Call="ListConflicts"/>
   <Route Url="/conflicts/:id" Method="PUT" Call="ReviewConflict"/>
+  <Route Url="/proposals" Method="GET" Call="ListProposals"/>
+  <Route Url="/proposals/:id" Method="PUT" Call="DecideProposal"/>
+  <Route Url="/notifications" Method="GET" Call="ListNotifications"/>
   <Route Url="/knowledge" Method="GET" Call="ListKnowledge"/>
   <Route Url="/memory" Method="GET" Call="ListMemory"/>
 </Routes>
@@ -28,7 +31,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 
 ClassMethod ListAgents() As %Status
 {
-    Return ..WriteQuery("SELECT Name, ""Role"", Description, SystemPrompt, Tone, ProviderName, ModelName, DecisionField, AllowedDecisions, ReviewDecisions, InputType, Symbol, Enabled, (SELECT LIST(ToolKey) FROM Mercurius_Model.AgentToolPermission P WHERE P.AgentName = A.Name) AS Tools FROM Mercurius_Model.AgentDefinition A ORDER BY ID")
+    Return ..WriteQuery("SELECT Name, ""Role"", Description, SystemPrompt, Tone, ProviderName, ModelName, DecisionField, AllowedDecisions, ReviewDecisions, InputType, Symbol, FallbackRules, Enabled, (SELECT LIST(ToolKey) FROM Mercurius_Model.AgentToolPermission P WHERE P.AgentName = A.Name) AS Tools FROM Mercurius_Model.AgentDefinition A ORDER BY ID")
 }
 
 ClassMethod CreateAgent() As %Status
@@ -85,6 +88,7 @@ ClassMethod SendMessage(pName As %String) As %Status
         "needsReview":(Response.NeedsReview = 1),
         "result":(Response.Result),
         "error":(Response.ErrorMessage),
+        "engine":(Response.Engine),
         "sessionId":(Response.SessionId)
     }.%ToJSON()
     Return $$$OK
@@ -98,12 +102,12 @@ ClassMethod ListTools() As %Status
 
 ClassMethod GetSummary() As %Status
 {
-    Return ..WriteQuery("SELECT COUNT(*) AS Runs, SUM(CASE WHEN Route = 'Review' THEN 1 ELSE 0 END) AS Review, SUM(CASE WHEN Status = 'Failed' THEN 1 ELSE 0 END) AS Failed, (SELECT COUNT(*) FROM Mercurius_Model.KnowledgeConflict WHERE Status = 'Open') AS OpenConflicts, (SELECT COUNT(*) FROM Mercurius_Model.AgentToolCall) AS ToolCalls FROM Mercurius_Model.AgentExecution")
+    Return ..WriteQuery("SELECT COUNT(*) AS Runs, SUM(CASE WHEN Route = 'Review' THEN 1 ELSE 0 END) AS Review, SUM(CASE WHEN Status = 'Failed' THEN 1 ELSE 0 END) AS Failed, (SELECT COUNT(*) FROM Mercurius_Model.KnowledgeConflict WHERE Status = 'Open') AS OpenConflicts, (SELECT COUNT(*) FROM Mercurius_Model.AgentToolCall) AS ToolCalls, (SELECT COUNT(*) FROM Mercurius_Model.ActionProposal WHERE Status = 'Proposed') AS PendingActions, SUM(CASE WHEN Engine = 'Rules' THEN 1 ELSE 0 END) AS RuleRuns, SUM(PromptTokens + CompletionTokens) AS Tokens, SUM(CostUSD) AS CostUSD FROM Mercurius_Model.AgentExecution")
 }
 
 ClassMethod ListExecutions() As %Status
 {
-    Return ..WriteAgentQuery("SELECT TOP 100 ExecutionId, AgentName, SourceType, Status, Decision, Route, StartedAt, CompletedAt, InputSummary, OutputSummary, ErrorDetails, InteropSessionId, (SELECT LIST(ToolKey) FROM Mercurius_Model.AgentToolCall T WHERE T.ExecutionId = E.ExecutionId) AS Tools FROM Mercurius_Model.AgentExecution E", "ID DESC")
+    Return ..WriteAgentQuery("SELECT TOP 100 ExecutionId, AgentName, SourceType, Status, Decision, Route, StartedAt, CompletedAt, InputSummary, OutputSummary, ErrorDetails, InteropSessionId, Engine, ModelName, PromptTokens, CompletionTokens, CostUSD, (SELECT LIST(ToolKey) FROM Mercurius_Model.AgentToolCall T WHERE T.ExecutionId = E.ExecutionId) AS Tools, (SELECT LIST(ActionType || ' ' || Status) FROM Mercurius_Model.ActionProposal A WHERE A.ExecutionId = E.ExecutionId) AS Actions FROM Mercurius_Model.AgentExecution E", "ID DESC")
 }
 
 ClassMethod ListConflicts() As %Status
@@ -124,6 +128,29 @@ ClassMethod ReviewConflict(pId As %String) As %Status
     Set Conflict.ReviewedBy = $USERNAME
     Set Conflict.ReviewedAt = $ZDATETIME($HOROLOG, 3)
     Return ..SaveResult(Conflict.%Save())
+}
+
+ClassMethod ListProposals() As %Status
+{
+    Do ##class(Mercurius.Runtime.ActionService).ExpireOld()
+    Return ..WriteQuery("SELECT TOP 100 ID AS Id, AgentName, ExecutionId, ActionType, Summary, Payload, Status, CreatedAt, ExpiresAt, DecidedBy, DecidedAt, Result FROM Mercurius_Model.ActionProposal ORDER BY ID DESC")
+}
+
+/// Approves or rejects a proposed action. Approval re-checks it, then runs it through the production.
+ClassMethod DecideProposal(pId As %String) As %Status
+{
+    Set Body = ..ReadBody()
+    Return:('$ISOBJECT(Body)) ..Fail(..#HTTP400BADREQUEST, "The request body isn't valid JSON.")
+    Return:('$LISTFIND($LISTBUILD("Approved", "Rejected"), Body.status)) ..Fail(..#HTTP400BADREQUEST, "Status must be Approved or Rejected.")
+    Set Problem = ##class(Mercurius.Runtime.ActionService).Decide(pId, Body.status, $USERNAME)
+    Return:(Problem '= "") ..Fail(..#HTTP409CONFLICT, Problem)
+    Write {"saved":true}.%ToJSON()
+    Return $$$OK
+}
+
+ClassMethod ListNotifications() As %Status
+{
+    Return ..WriteQuery("SELECT TOP 100 AgentName, Message, Channel, ApprovedBy, CreatedAt FROM Mercurius_Model.Notification ORDER BY ID DESC")
 }
 
 ClassMethod ListKnowledge() As %Status

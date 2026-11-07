@@ -9,7 +9,7 @@ routes a real message through a production.
 
 ## What it does
 
-A document arrives at a Business Service. The **Scribe** agent searches its private
+A document arrives at a Business Service. The **Documenter** agent searches its private
 knowledge and decides whether the document relates to, or contradicts, what it already
 knows. A contradiction is recorded as an open finding and routed to review. Alerts follow
 the same production and code, but reach the **Sentinel** agent, which has different
@@ -66,7 +66,7 @@ with IRIS.
 
 ```bash
 docker compose ps                                        # shows (healthy)
-curl -s http://localhost:52775/mercurius/api/agents      # lists Scribe and Sentinel
+curl -s http://localhost:52775/mercurius/api/agents      # lists Documenter and Sentinel
 ```
 
 Backend checks, no LLM needed:

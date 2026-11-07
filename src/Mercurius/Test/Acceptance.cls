@@ -13,23 +13,23 @@ ClassMethod Run() As %Boolean
     Set Denied = Policy.%CanExecute("iris:test", {"name":"SaveKnowledge"}, {})
     Set Passed = ..Check("Test 3: tool not granted is denied", $$$ISOK(Allowed) && $$$ISERR(Denied)) && Passed
 
-    Set SC = $CLASSMETHOD(Service, "SaveMemory", "Scribe", "acceptance-memory-marker")
+    Set SC = $CLASSMETHOD(Service, "SaveMemory", "Documenter", "acceptance-memory-marker")
     Set Other = $CLASSMETHOD(Service, "GetMemories", "Sentinel").%ToJSON()
-    Set Own = $CLASSMETHOD(Service, "GetMemories", "Scribe").%ToJSON()
+    Set Own = $CLASSMETHOD(Service, "GetMemories", "Documenter").%ToJSON()
     Set Passed = ..Check("Test 4: memory stays with its agent", (Own [ "acceptance-memory-marker") && '(Other [ "acceptance-memory-marker")) && Passed
 
     Set Search = $CLASSMETHOD(Service, "Search", "Sentinel", "tailscale funnel webhook").%ToJSON()
     Set Passed = ..Check("Test 4b: search stays with its agent", Search = "[]") && Passed
 
-    Do $CLASSMETHOD(Service, "SaveNode", "Scribe", "Scribe node", "x", "Note", .ScribeId)
+    Do $CLASSMETHOD(Service, "SaveNode", "Documenter", "Documenter node", "x", "Note", .DocumenterId)
     Do $CLASSMETHOD(Service, "SaveNode", "Sentinel", "Sentinel node", "x", "Note", .SentinelId)
-    Set Cross = $CLASSMETHOD(Service, "Relate", "Scribe", ScribeId, SentinelId, "RELATES_TO")
+    Set Cross = $CLASSMETHOD(Service, "Relate", "Documenter", DocumenterId, SentinelId, "RELATES_TO")
     Set Passed = ..Check("Test 5: cross-agent relationship rejected", $$$ISERR(Cross)) && Passed
 
     Set Policy = "Mercurius.Runtime.DecisionPolicy"
-    Do $CLASSMETHOD(Policy, "Evaluate", "Scribe", "{""decision"":""approve-everything""}", .Decision, .NeedsReview)
+    Do $CLASSMETHOD(Policy, "Evaluate", "Documenter", "{""decision"":""approve-everything""}", .Decision, .NeedsReview)
     Set Passed = ..Check("Invalid decision goes to review", NeedsReview && (Decision = "")) && Passed
-    Do $CLASSMETHOD(Policy, "Evaluate", "Scribe", "not json", .Decision, .NeedsReview)
+    Do $CLASSMETHOD(Policy, "Evaluate", "Documenter", "not json", .Decision, .NeedsReview)
     Set Passed = ..Check("Malformed reply goes to review", NeedsReview) && Passed
 
     Set Redacted = ##class(Mercurius.Runtime.AgentExecutor).Redact("Incorrect API key provided: sk-proj-abc123DEF456")

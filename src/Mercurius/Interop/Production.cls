@@ -5,7 +5,7 @@ XData ProductionDefinition
 {
 <Production Name="Mercurius.Interop.Production" LogGeneralTraceEvents="false">
   <Item Name="DocumentIngress" ClassName="Mercurius.Interop.BS.DocumentIngress" PoolSize="1" Enabled="true">
-    <Setting Target="Host" Name="AgentName">Scribe</Setting>
+    <Setting Target="Host" Name="AgentName">Documenter</Setting>
     <Setting Target="Host" Name="EventType">Document</Setting>
     <Setting Target="Adapter" Name="FilePath">/home/irisowner/inbox/documents/</Setting>
     <Setting Target="Adapter" Name="FileSpec">*</Setting>

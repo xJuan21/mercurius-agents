@@ -16,6 +16,13 @@ XData ProductionDefinition
     <Setting Target="Adapter" Name="FilePath">/home/irisowner/inbox/alerts/</Setting>
     <Setting Target="Adapter" Name="FileSpec">*</Setting>
   </Item>
+  <Item Name="CodeIngress" ClassName="Mercurius.Interop.BS.DocumentIngress" PoolSize="1" Enabled="true">
+    <Setting Target="Host" Name="AgentName">Forge</Setting>
+    <Setting Target="Host" Name="EventType">Event</Setting>
+    <Setting Target="Adapter" Name="FilePath">/home/irisowner/inbox/code/</Setting>
+    <Setting Target="Adapter" Name="FileSpec">*</Setting>
+  </Item>
+  <Item Name="ChatIngress" ClassName="Mercurius.Interop.BS.ChatIngress" PoolSize="0" Enabled="true"/>
   <Item Name="AgentWorkflow" ClassName="Mercurius.Interop.BP.AgentWorkflow" PoolSize="1" Enabled="true"/>
   <Item Name="AgentRunner" ClassName="Mercurius.Interop.BO.AgentRunner" PoolSize="1" Enabled="true"/>
   <Item Name="ResultHandler" ClassName="Mercurius.Interop.BO.ResultHandler" PoolSize="1" Enabled="true"/>

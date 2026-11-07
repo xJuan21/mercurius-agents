@@ -14,6 +14,10 @@ Property Status As %String(MAXLEN = 20, VALUELIST = ",Open,Reviewed,Dismissed,Re
 
 Property CreatedAt As %TimeStamp [ InitialExpression = {$ZDATETIME($HOROLOG, 3)} ];
 
+Property ReviewedBy As %String(MAXLEN = 128);
+
+Property ReviewedAt As %TimeStamp;
+
 Index AgentNameIndex On AgentName;
 
 }

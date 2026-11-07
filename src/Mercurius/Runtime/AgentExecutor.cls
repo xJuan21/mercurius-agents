@@ -25,6 +25,7 @@ ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %
         Set Agent.Model = Definition.ModelName
         Set Agent.SystemPrompt = Definition.SystemPrompt
         Set:(Definition.Tone '= "") Agent.SystemPrompt = Agent.SystemPrompt_" Tone: "_Definition.Tone
+        Set Agent.SystemPrompt = Agent.SystemPrompt_" "_..DecisionContract(Definition)
         $$$ThrowOnError(Agent.%Init())
 
         $$$ThrowOnError(..AttachTools(Agent, pAgentName, pExecutionId))
@@ -36,6 +37,13 @@ ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %
         Set SC = Ex.AsStatus()
     }
     Return SC
+}
+
+/// The reply format, built from the agent's stored decision values.
+ClassMethod DecisionContract(pDefinition As Mercurius.Model.AgentDefinition) As %String
+{
+    Set Values = $TRANSLATE(pDefinition.AllowedDecisions, ",", "|")
+    Return "Finish by replying only with JSON: {"""_pDefinition.DecisionField_""":"""_Values_""",""reason"":""one sentence""}"
 }
 
 /// Binds the tools and policies to this agent. The LLM never supplies the agent's identity.

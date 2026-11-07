@@ -10,6 +10,7 @@ Method Run(pRequest As Mercurius.Interop.Msg.AgentRequest, Output pResponse As M
     Set pResponse.AgentName = pRequest.AgentName
     Set pResponse.ExecutionId = $SYSTEM.Util.CreateGUID()
     Set pResponse.NeedsReview = 1
+    Set pResponse.SessionId = ..%SessionId
 
     Set Execution = ##class(Mercurius.Model.AgentExecution).%New()
     Set Execution.ExecutionId = pResponse.ExecutionId

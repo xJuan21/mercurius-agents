@@ -32,6 +32,13 @@ ClassMethod Run() As %Boolean
     Do $CLASSMETHOD(Policy, "Evaluate", "Documenter", "not json", .Decision, .NeedsReview)
     Set Passed = ..Check("Malformed reply goes to review", NeedsReview) && Passed
 
+    Set Bad = ##class(Mercurius.Runtime.AgentService).Validate({"name":"bad name!","role":"x","instructions":"y","allowedDecisions":"a"}, 1)
+    Set Passed = ..Check("Invalid agent name rejected", Bad '= "") && Passed
+    Set Bad = ##class(Mercurius.Runtime.AgentService).Validate({"name":"Atlas","role":"x","instructions":"y","allowedDecisions":"a,b","reviewDecisions":"c"}, 1)
+    Set Passed = ..Check("Review value must be an allowed decision", Bad '= "") && Passed
+    Set Bad = ##class(Mercurius.Runtime.AgentService).Validate({"name":"Atlas","role":"x","instructions":"y","allowedDecisions":"a","tools":["RunShell"]}, 1)
+    Set Passed = ..Check("Unknown tool rejected", Bad '= "") && Passed
+
     Set Redacted = ##class(Mercurius.Runtime.AgentExecutor).Redact("Incorrect API key provided: sk-proj-abc123DEF456")
     Set Passed = ..Check("API keys are removed from stored errors", '(Redacted [ "abc123DEF456") && (Redacted [ "[REDACTED]")) && Passed
 

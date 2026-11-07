@@ -1,0 +1,2 @@
+Please review this ObjectScript line before I commit it:
+set x=$get(^Config("key")) w x

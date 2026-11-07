@@ -14,6 +14,8 @@ Property NeedsReview As %Boolean;
 
 Property Result As %String(MAXLEN = "");
 
+Property SessionId As %Integer;
+
 Property ErrorMessage As %String(MAXLEN = 2000);
 
 }

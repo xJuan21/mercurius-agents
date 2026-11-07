@@ -9,15 +9,15 @@ Parameter CHARSET = "utf-8";
 XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 {
 <Routes>
-  <Route Url="/" Method="GET" Call="Page"/>
   <Route Url="/api/agents" Method="GET" Call="Agents"/>
   <Route Url="/api/executions" Method="GET" Call="Executions"/>
   <Route Url="/api/conflicts" Method="GET" Call="Conflicts"/>
   <Route Url="/api/knowledge" Method="GET" Call="Knowledge"/>
+  <Route Url="/" Method="GET" Call="ShowDashboard"/>
 </Routes>
 }
 
-ClassMethod Page() As %Status
+ClassMethod ShowDashboard() As %Status
 {
     Set %response.ContentType = "text/html"
     Set XData = ##class(%Dictionary.CompiledXData).%OpenId("Mercurius.API.REST||Dashboard")

@@ -33,6 +33,38 @@ File inbox or web UI -> DocumentIngress / AlertIngress / CodeIngress / ChatIngre
 
 An invalid or failed reply never gets accepted: it goes to review.
 
+## What agents can do
+
+| Capability | How |
+|---|---|
+| Decide | Every run ends in a decision from the agent's own list. Invalid replies go to review |
+| Use tools | Search knowledge, link notes, flag conflicts, read and save memory, each granted per agent |
+| Propose actions | Send a notification, or update a note. Nothing runs until a person approves it in **Review**; approval re-checks the proposal and runs it through the production |
+| Keep working without AI | If there's no key or the provider fails, the agent's fallback rules decide. These runs are labelled **Rules, not AI** and always go to review |
+| Show their cost | Each run records the model, tokens and an estimated cost |
+
+## Measured results
+
+`Mercurius.Test.Eval` sends 45 labelled inputs through the production, 15 per agent, with fresh
+sample knowledge for each. One run on build 109, 2026-11-07:
+
+| Agent | Model | Correct | Search found the right note | Estimated cost, whole set |
+|---|---|---|---|---|
+| Documenter | gpt-4.1-mini | 15 of 15 | 10 of 10 | $0.005 |
+| Sentinel | gpt-4.1-mini | 14 of 15 | n/a | $0.002 |
+| Forge | gpt-4.1 | 12 of 15 | n/a | $0.013 |
+
+- Forge flags some valid code as needing changes. `gpt-4.1-mini` scored 9 to 11 of 15, so Forge uses `gpt-4.1`.
+- The inputs were written by the author, and model output varies between runs. Treat these as a smoke test, not a benchmark.
+- Costs come from list prices and count only the final model call of each run, so they're lower bounds.
+- Basic text search found the right note every time, so vector search isn't needed at this size.
+
+Run it yourself:
+
+```bash
+echo 'Do ##class(Mercurius.Test.Eval).Run() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
+```
+
 ## Requirements
 
 - Docker with Compose
@@ -101,7 +133,8 @@ portal and give it the `MercuriusUser` role.
 |---|---|
 | Chat | Sends a message through the production and shows the agent's decision, tools and trace |
 | Agents | Shows the agents. **Build an agent** creates a stored agent that runs immediately |
-| Review | Lists open conflicts. A person resolves, reviews or dismisses each one |
+| Review | Approve or reject proposed actions, and resolve possible contradictions |
+| Inbox | Notifications a person approved |
 | Memory, Knowledge | Show what the selected agent holds privately |
 | History | Shows every run, including those from the file services |
 
@@ -178,6 +211,7 @@ so it's a possible later direction once the classes are no longer experimental.
 
 - Knowledge search is basic text matching, so related notes can be missed.
 - A conflict is an AI finding, not a verified fact.
+- Approved notifications go to the in-app inbox. To deliver them elsewhere, point the `NotifyTarget` setting of `ActionIngress` at another operation.
 - An LLM call that hangs has no timeout of its own.
 - API keys are redacted from stored errors. Other sensitive text in an error is not.
 - Chat shows decisions, not free conversation.

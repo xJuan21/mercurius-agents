@@ -1,0 +1,14 @@
+<div class="page">
+  <h1>Inbox</h1>
+  <p class="page-lead">Notifications that a person approved. Each one came from an agent's proposal.</p>
+  <div class="stack">
+    @for (item of notifications(); track $index) {
+      <div class="tile">
+        <small>{{ item.AgentName }} · approved by {{ item.ApprovedBy }} · {{ item.CreatedAt }}</small>
+        <p>{{ item.Message }}</p>
+      </div>
+    } @empty {
+      <p class="empty">No notifications yet. Approve a proposed notification in Review.</p>
+    }
+  </div>
+</div>

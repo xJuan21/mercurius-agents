@@ -38,6 +38,7 @@ export class AgentForm {
     instructions: ['', [Validators.required, Validators.maxLength(4000)]],
     allowedDecisions: ['proceed,review,ignore', Validators.required],
     reviewDecisions: ['review'],
+    fallbackRules: ['', Validators.maxLength(4000)],
     enabled: [true],
   });
 
@@ -102,6 +103,7 @@ export class AgentForm {
         instructions: agent.SystemPrompt,
         allowedDecisions: agent.AllowedDecisions,
         reviewDecisions: agent.ReviewDecisions,
+        fallbackRules: agent.FallbackRules ?? '',
         enabled: Number(agent.Enabled) === 1,
       });
       this.form.controls.name.disable();

@@ -11,6 +11,7 @@ export class AgentStore {
   readonly agents = signal<Agent[]>([]);
   readonly tools = signal<Tool[]>([]);
   readonly openConflicts = signal(0);
+  readonly pendingActions = signal(0);
   readonly selected = computed(
     () => this.agents().find((agent) => agent.Name === this.selectedName()) ?? this.agents()[0] ?? null,
   );
@@ -25,7 +26,10 @@ export class AgentStore {
   }
 
   refreshCounts(): void {
-    this.api.summary().subscribe((summary) => this.openConflicts.set(Number(summary.OpenConflicts) || 0));
+    this.api.summary().subscribe((summary) => {
+      this.openConflicts.set(Number(summary.OpenConflicts) || 0);
+      this.pendingActions.set(Number(summary.PendingActions) || 0);
+    });
   }
 
   select(name: string): void {

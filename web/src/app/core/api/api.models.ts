@@ -12,6 +12,7 @@ export interface Agent {
   ReviewDecisions: string;
   InputType: string;
   Symbol: string;
+  FallbackRules: string;
   Enabled: string | number;
   Tools: string;
 }
@@ -25,6 +26,7 @@ export interface AgentInput {
   allowedDecisions: string;
   reviewDecisions: string;
   tools: string[];
+  fallbackRules: string;
   enabled: boolean;
 }
 
@@ -47,7 +49,13 @@ export interface Execution {
   OutputSummary: string;
   ErrorDetails: string;
   InteropSessionId: string;
+  Engine: string;
+  ModelName: string;
+  PromptTokens: string | number;
+  CompletionTokens: string | number;
+  CostUSD: string | number;
   Tools: string;
+  Actions: string;
 }
 
 export interface Summary {
@@ -56,6 +64,35 @@ export interface Summary {
   Failed: string | number;
   OpenConflicts: string | number;
   ToolCalls: string | number;
+  PendingActions: string | number;
+  RuleRuns: string | number;
+  Tokens: string | number;
+  CostUSD: string | number;
+}
+
+export type ProposalStatus = 'Proposed' | 'Rejected' | 'Executed' | 'Failed' | 'Expired';
+
+export interface Proposal {
+  Id: string;
+  AgentName: string;
+  ExecutionId: string;
+  ActionType: 'Notify' | 'UpdateKnowledge';
+  Summary: string;
+  Payload: string;
+  Status: ProposalStatus;
+  CreatedAt: string;
+  ExpiresAt: string;
+  DecidedBy: string;
+  DecidedAt: string;
+  Result: string;
+}
+
+export interface Notification {
+  AgentName: string;
+  Message: string;
+  Channel: string;
+  ApprovedBy: string;
+  CreatedAt: string;
 }
 
 export type ConflictStatus = 'Open' | 'Reviewed' | 'Dismissed' | 'Resolved';

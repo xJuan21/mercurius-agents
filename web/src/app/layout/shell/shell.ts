@@ -22,10 +22,15 @@ export class Shell implements OnInit {
   protected readonly menuOpen = signal(false);
   protected readonly initials = computed(() => this.auth.username().slice(0, 2).toUpperCase());
   protected readonly selectedTools = computed(() => splitList(this.store.selected()?.Tools));
+  protected readonly ruleCount = computed(
+    () => (this.store.selected()?.FallbackRules ?? '').split('\n').filter((line) => line.includes('=>')).length,
+  );
+  protected readonly reviewCount = computed(() => this.store.openConflicts() + this.store.pendingActions());
   protected readonly pages = [
     { path: '/chat', label: 'Chat', icon: 'chat' },
     { path: '/agents', label: 'Agents', icon: 'agents' },
     { path: '/review', label: 'Review', icon: 'review' },
+    { path: '/inbox', label: 'Inbox', icon: 'inbox' },
     { path: '/memory', label: 'Memory', icon: 'memory' },
     { path: '/history', label: 'History', icon: 'history' },
     { path: '/knowledge', label: 'Knowledge', icon: 'graph' },

@@ -8,3 +8,6 @@ p { color: var(--body); font-size: 13px; line-height: 1.7; margin: 8px 0 10px; o
 .path { display: flex; flex-wrap: wrap; gap: 4px 6px; list-style: none; margin: 0 0 10px; padding: 0; font-size: 12px; color: var(--muted); }
 .path li + li::before { content: '→'; margin-right: 6px; color: #b4b9c3; }
 footer { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.badge.rules { margin-left: auto; background: #eef0f4; color: var(--body); }
+.badge.rules + .badge { margin-left: 0; }
+.action { margin: 0 0 10px; font-size: 13px; color: var(--purple-ink); }

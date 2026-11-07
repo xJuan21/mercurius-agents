@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: 'chat', title: 'Chat', loadComponent: () => import('./features/chat/chat').then((m) => m.Chat) },
       { path: 'agents', title: 'Agents', loadComponent: () => import('./features/agents/agents').then((m) => m.Agents) },
       { path: 'review', title: 'Review', loadComponent: () => import('./features/review/review').then((m) => m.Review) },
+      { path: 'inbox', title: 'Inbox', loadComponent: () => import('./features/inbox/inbox').then((m) => m.Inbox) },
       { path: 'memory', title: 'Memory', loadComponent: () => import('./features/memory/memory').then((m) => m.Memory) },
       { path: 'history', title: 'History', loadComponent: () => import('./features/history/history').then((m) => m.History) },
       { path: 'knowledge', title: 'Knowledge', loadComponent: () => import('./features/knowledge/knowledge').then((m) => m.Knowledge) },

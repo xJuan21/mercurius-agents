@@ -35,6 +35,10 @@
     <label class="field-label" for="agent-review">Decisions that need a person</label>
     <input id="agent-review" class="input" formControlName="reviewDecisions" />
 
+    <label class="field-label" for="agent-rules">Fallback rules</label>
+    <textarea id="agent-rules" class="input rules" formControlName="fallbackRules" placeholder="instead of => conflict"></textarea>
+    <p class="hint">Used only when the AI can't answer. One per line: phrase => decision. Rule decisions always go to review.</p>
+
     <fieldset>
       <legend class="field-label">Permitted tools</legend>
       @for (tool of store.tools(); track tool.key) {

@@ -9,6 +9,8 @@ import {
   Execution,
   Knowledge,
   Memory,
+  Notification,
+  Proposal,
   Summary,
   Tool,
 } from './api.models';
@@ -54,6 +56,19 @@ export class ApiService {
 
   reviewConflict(id: string, status: ConflictStatus): Observable<unknown> {
     return this.http.put(`${API_URL}/conflicts/${id}`, { status });
+  }
+
+  proposals(): Observable<Proposal[]> {
+    return this.http.get<Proposal[]>(`${API_URL}/proposals`);
+  }
+
+  /** Approval re-checks the proposal and runs it through the production. */
+  decideProposal(id: string, status: 'Approved' | 'Rejected'): Observable<unknown> {
+    return this.http.put(`${API_URL}/proposals/${id}`, { status });
+  }
+
+  notifications(): Observable<Notification[]> {
+    return this.http.get<Notification[]>(`${API_URL}/notifications`);
   }
 
   knowledge(agent: string): Observable<Knowledge> {

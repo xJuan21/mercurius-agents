@@ -22,4 +22,18 @@ export function decisionReason(execution: Execution): string {
 export const traceUrl = (sessionId: string): string =>
   `/csp/irisapp/EnsPortal.VisualTrace.zen?SESSIONID=${encodeURIComponent(sessionId)}`;
 
+/** Formats an estimated cost, which is a lower bound because tool loops make more calls. */
+export function formatCost(value: string | number | null | undefined): string {
+  const amount = Number(value);
+  if (value === '' || value === null || value === undefined || Number.isNaN(amount)) {
+    return '';
+  }
+  return amount < 0.01 ? `at least $${amount.toFixed(4)}` : `at least $${amount.toFixed(2)}`;
+}
+
+export const ACTION_LABELS: Record<string, string> = {
+  Notify: 'Notification',
+  UpdateKnowledge: 'Knowledge update',
+};
+
 export const PORTAL_URL = '/csp/sys/UtilHome.csp';

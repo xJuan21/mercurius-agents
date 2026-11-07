@@ -1,0 +1,99 @@
+<div class="app">
+  <aside class="sidebar" [class.open]="menuOpen()">
+    <div class="brand"><span class="logo">m</span>mercurius<span class="dot-accent">.</span></div>
+
+    <div>
+      <div class="label">WORKSPACE</div>
+      <nav class="nav" aria-label="Main">
+        @for (page of pages; track page.path) {
+          <a [routerLink]="page.path" routerLinkActive="active" (click)="menuOpen.set(false)">
+            <app-icon [name]="page.icon" />
+            {{ page.label }}
+            @if (page.path === '/agents') {
+              <span class="count">{{ store.agents().length }}</span>
+            }
+            @if (page.path === '/review' && store.openConflicts()) {
+              <span class="count alert">{{ store.openConflicts() }}</span>
+            }
+          </a>
+        }
+      </nav>
+    </div>
+
+    <div>
+      <div class="label">YOUR AGENTS</div>
+      @for (agent of store.agents(); track agent.Name) {
+        <button class="agent-short" [class.current]="agent.Name === store.selected()?.Name" (click)="chooseAgent(agent.Name)">
+          <app-icon [name]="agent.Symbol" />
+          {{ agent.Name }}
+          <span class="status-dot" [class.off]="agent.Enabled != 1"></span>
+        </button>
+      }
+      <button class="build" (click)="store.form.set('new')">＋ Build an agent</button>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a class="environment" [href]="portalUrl" target="_blank" rel="noopener">
+        <span class="status-dot"></span>IRIS portal <span class="end">↗</span>
+      </a>
+      <div class="profile">
+        <span class="avatar">{{ initials() }}</span>
+        <b>{{ auth.username() }}</b>
+        <button class="sign-out" (click)="signOut()">Sign out</button>
+      </div>
+    </div>
+  </aside>
+
+  @if (menuOpen()) {
+    <button class="scrim" aria-label="Close navigation" (click)="menuOpen.set(false)"></button>
+  }
+
+  <main class="main">
+    <div class="topbar">
+      <button class="mobile-menu" aria-label="Open navigation" (click)="menuOpen.set(true)">☰</button>
+      <span class="tagline">Intelligent companions. Powerful workflows.</span>
+    </div>
+    <router-outlet />
+  </main>
+
+  @if (store.selected(); as agent) {
+    <aside class="details" aria-label="Agent details">
+      <div class="detail-profile">
+        <div class="agent-icon"><app-icon [name]="agent.Symbol" /></div>
+        <h2>{{ agent.Name }}</h2>
+        <p>{{ agent.Role }}</p>
+      </div>
+      <section>
+        <h3>Purpose</h3>
+        <p>{{ agent.Description }}</p>
+      </section>
+      <section>
+        <h3>Tone of voice</h3>
+        <span class="badge">{{ agent.Tone }}</span>
+      </section>
+      <section>
+        <h3>Decisions</h3>
+        <p>{{ agent.AllowedDecisions }}</p>
+        @if (agent.ReviewDecisions) {
+          <p class="review-note">Needs a person: {{ agent.ReviewDecisions }}</p>
+        }
+      </section>
+      <section>
+        <h3>Permitted tools</h3>
+        @for (tool of selectedTools(); track tool) {
+          <div class="tool-item"><app-icon name="shield" /><span>{{ store.toolLabel(tool) }}</span></div>
+        } @empty {
+          <p>No tools granted.</p>
+        }
+      </section>
+      <section>
+        <h3>Model</h3>
+        <div class="tool-item"><app-icon name="spark" /><span>{{ agent.ModelName }}</span><small>{{ agent.ProviderName }}</small></div>
+      </section>
+      <button class="btn edit" (click)="store.form.set(agent)">Edit agent configuration</button>
+      <p class="note">Agent findings are suggestions for you to review.</p>
+    </aside>
+  }
+</div>
+
+<app-agent-form />

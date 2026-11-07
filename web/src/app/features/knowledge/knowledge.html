@@ -1,0 +1,29 @@
+<div class="page">
+  <h1>Knowledge</h1>
+  <p class="page-lead">What {{ store.selected()?.Name }} knows. Other agents can't see this.</p>
+
+  @if (links().length) {
+    <h2 class="section-title">Relationships</h2>
+    <div class="stack">
+      @for (link of links(); track $index) {
+        <div class="tile link">
+          <span class="badge" [class.review]="link.type === 'CONTRADICTS'">{{ link.type }}</span>
+          <span>{{ link.source }} <span class="arrow">→</span> {{ link.target }}</span>
+        </div>
+      }
+    </div>
+  }
+
+  <h2 class="section-title">Items</h2>
+  <div class="grid">
+    @for (node of data().nodes; track node.Id) {
+      <div class="tile">
+        <small>{{ node.NodeType }}</small>
+        <h2>{{ node.Title }}</h2>
+        <p>{{ node.Content }}</p>
+      </div>
+    } @empty {
+      <p class="empty">This agent has no knowledge yet.</p>
+    }
+  </div>
+</div>

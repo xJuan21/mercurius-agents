@@ -1,0 +1,46 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Review</h1>
+      <p class="page-lead">Potential contradictions found by agents. These are AI findings, and you make the call.</p>
+    </div>
+    <button class="btn" (click)="showAll.set(!showAll())">{{ showAll() ? 'Show open only' : 'Show all' }}</button>
+  </div>
+
+  <div class="stack">
+    @for (conflict of visible(); track conflict.Id) {
+      <article class="tile">
+        <div class="top">
+          <span class="badge" [class.review]="conflict.Status === 'Open'" [class.ok]="conflict.Status !== 'Open'">
+            {{ conflict.Status === 'Open' ? 'Needs review' : conflict.Status }}
+          </span>
+          <small>{{ conflict.AgentName }} · {{ conflict.CreatedAt }}</small>
+        </div>
+        <p class="finding">{{ conflict.Description }}</p>
+        <div class="compare">
+          <div>
+            <h3>Existing knowledge</h3>
+            <b>{{ conflict.TargetTitle }}</b>
+            <p>{{ conflict.TargetContent }}</p>
+          </div>
+          <div>
+            <h3>New note</h3>
+            <b>{{ conflict.SourceTitle }}</b>
+            <p>{{ conflict.SourceContent }}</p>
+          </div>
+        </div>
+        @if (conflict.Status === 'Open') {
+          <div class="actions">
+            @for (action of actions; track action.status) {
+              <button class="btn" [class.primary]="$first" (click)="review(conflict, action.status)">{{ action.label }}</button>
+            }
+          </div>
+        } @else {
+          <p class="hint">{{ conflict.Status }} by {{ conflict.ReviewedBy }} on {{ conflict.ReviewedAt }}</p>
+        }
+      </article>
+    } @empty {
+      <p class="empty">Nothing needs review right now.</p>
+    }
+  </div>
+</div>

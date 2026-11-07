@@ -1,0 +1,59 @@
+/// Tools for one agent. AgentName is set by the runtime, never by the LLM.
+Class Mercurius.Tools.Knowledge Extends %AI.ToolSet
+{
+
+XData Definition [ MimeType = application/xml ]
+{
+<ToolSet Name="Knowledge">
+  <Tool Name="SearchKnowledge" Method="SearchKnowledge"/>
+  <Tool Name="SaveKnowledge" Method="SaveKnowledge"/>
+  <Tool Name="CreateRelationship" Method="CreateRelationship"/>
+  <Tool Name="FlagConflict" Method="FlagConflict"/>
+  <Tool Name="GetAgentMemory" Method="GetAgentMemory"/>
+  <Tool Name="SaveAgentMemory" Method="SaveAgentMemory"/>
+</ToolSet>
+}
+
+Property AgentName As %String(MAXLEN = 100);
+
+/// Searches your private knowledge. Returns matching nodes with their ids.
+Method SearchKnowledge(pQuery As %String(DESCRIPTION = "Words to search for")) As %String
+{
+    Return ##class(Mercurius.Runtime.KnowledgeService).Search(..AgentName, pQuery).%ToJSON()
+}
+
+/// Saves a new item in your private knowledge and returns its id.
+Method SaveKnowledge(pTitle As %String(DESCRIPTION = "Short title"), pContent As %String(DESCRIPTION = "Full text"), pNodeType As %String(DESCRIPTION = "One of Note, Document, Project, Concept, Decision, Issue")) As %String
+{
+    Set SC = ##class(Mercurius.Runtime.KnowledgeService).SaveNode(..AgentName, pTitle, pContent, pNodeType, .NodeId)
+    Return $SELECT($$$ISOK(SC):"Saved node "_NodeId, 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+/// Links two of your nodes.
+Method CreateRelationship(pSourceId As %Integer(DESCRIPTION = "Source node id"), pTargetId As %Integer(DESCRIPTION = "Target node id"), pType As %String(DESCRIPTION = "One of RELATES_TO, DEPENDS_ON, CONTRADICTS, REFERENCES, BELONGS_TO")) As %String
+{
+    Set SC = ##class(Mercurius.Runtime.KnowledgeService).Relate(..AgentName, pSourceId, pTargetId, pType)
+    Return $SELECT($$$ISOK(SC):"Relationship created", 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+/// Records a potential contradiction between two of your nodes.
+Method FlagConflict(pSourceId As %Integer(DESCRIPTION = "Newer node id"), pTargetId As %Integer(DESCRIPTION = "Older node id"), pDescription As %String(DESCRIPTION = "What appears to conflict")) As %String
+{
+    Set SC = ##class(Mercurius.Runtime.KnowledgeService).FlagConflict(..AgentName, pSourceId, pTargetId, pDescription)
+    Return $SELECT($$$ISOK(SC):"Conflict recorded for review", 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+/// Returns your private memories.
+Method GetAgentMemory() As %String
+{
+    Return ##class(Mercurius.Runtime.KnowledgeService).GetMemories(..AgentName).%ToJSON()
+}
+
+/// Stores a private memory.
+Method SaveAgentMemory(pContent As %String(DESCRIPTION = "What to remember")) As %String
+{
+    Set SC = ##class(Mercurius.Runtime.KnowledgeService).SaveMemory(..AgentName, pContent)
+    Return $SELECT($$$ISOK(SC):"Memory saved", 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+}

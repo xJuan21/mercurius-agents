@@ -1,0 +1,36 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Execution history</h1>
+      <p class="page-lead">Every agent decision made inside the production.</p>
+    </div>
+    <select class="input filter" aria-label="Filter by agent" [ngModel]="filter()" (ngModelChange)="filter.set($event)">
+      <option value="">All agents</option>
+      @for (agent of store.agents(); track agent.Name) {
+        <option [value]="agent.Name">{{ agent.Name }}</option>
+      }
+    </select>
+  </div>
+
+  @if (summary(); as totals) {
+    <div class="stat-row">
+      <div class="stat"><b>{{ totals.Runs || 0 }}</b><span>Runs</span></div>
+      <div class="stat"><b>{{ totals.Review || 0 }}</b><span>Sent to review</span></div>
+      <div class="stat"><b>{{ totals.OpenConflicts || 0 }}</b><span>Open conflicts</span></div>
+      <div class="stat"><b>{{ totals.Failed || 0 }}</b><span>Failed</span></div>
+      <div class="stat"><b>{{ totals.ToolCalls || 0 }}</b><span>Tool calls</span></div>
+    </div>
+  }
+
+  <div class="stack">
+    @for (run of visible(); track run.ExecutionId) {
+      <section class="run">
+        <div class="meta"><b>{{ run.AgentName }}</b><span>{{ run.StartedAt }}</span></div>
+        <p class="input-text">{{ run.InputSummary }}</p>
+        <app-decision-card [execution]="run" />
+      </section>
+    } @empty {
+      <p class="empty">No runs yet. Send a message in Chat, or run demo/run.sh.</p>
+    }
+  </div>
+</div>

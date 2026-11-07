@@ -1,4 +1,12 @@
 ARG IMAGE=iris-community:2027.1.0AI.109.0
+# Builds the Angular app. Only its output goes into the IRIS image.
+FROM node:24-slim AS web
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+RUN npx ng build
+
 FROM $IMAGE 
 
 WORKDIR /home/irisowner/dev
@@ -14,6 +22,7 @@ ENV PATH "/usr/irissys/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sb
 
 
 
+COPY --from=web --chown=51773:51773 /web/dist/mercurius/browser /usr/irissys/csp/mercurius
 COPY requirements.txt /home/irisowner/dev/requirements.txt
 COPY merge.cpf /home/irisowner/dev/merge.cpf
 ENV PYTHONPATH="/usr/irissys/lib/python"

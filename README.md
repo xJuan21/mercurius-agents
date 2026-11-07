@@ -1,148 +1,185 @@
-# AI Hub Dev Template
+# Mercurius Agents
 
-This repo provides a template to kickstart development with AI Hub. 
+Configurable AI agents that make decisions inside InterSystems IRIS Interoperability
+productions, built on IRIS AI Hub.
 
-## Contents
+Agents are stored records, not generated classes. One runtime runs them all. Each agent has
+its own instructions, permitted tools, private knowledge and memory. Its decision then
+routes a real message through a production.
 
-- **./skills** - agent skills with information on using AI hub for AI agents. Move these to a suitable location for your preferred AI coding agent. 
-- **./src/Sample** - Basic sample classes for tools, toolsets, agents and MCP servers. These are installed with zpm when the container is build.  
-- **./src/Python** - An example stdio MCP server defined in Python and used in the IRIS Toolsets 
+## What it does
 
-## Using the template
+A document arrives at a Business Service. The **Documenter** agent searches its private
+knowledge and decides whether the document relates to, or contradicts, what it already
+knows. A contradiction is recorded as an open finding and routed to review. Alerts follow
+the same production and code, but reach the **Sentinel** agent, which has different
+instructions and tools. **Forge** reviews code against the team's standards.
 
-### Download AI Hub Container
-
-1. Download an AI Hub container from the [Early Access Program Portal](https://evaluation.intersystems.com/Eval/early-access/AIHub). The docker-containers end with `docker.tar.gz`, ensure you choose the version suitable for your operating system (arm64 for macOS).
-
-
-2. Load the image with: 
-
-    ```bash
-    docker load -i /path/to/iris-community-2026.3.0AI.154.0-docker.tar.gz
-    ```
-
-    Once it's complete you should see `Loaded image: docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2026.3.0AI.154.0` (if not you can use `docker images` to find the image name). 
-
-3. Change the Image name in the [Dockerfile](./Dockerfile) to match your version and operating system (image name printed above).
-
-
-### Build Template Repo
-
-4. Clone this repo: 
-
-```bash
-git clone https://github.com/intersystems-community/ai-hub-dev-template
-cd ai-hub-dev-template
+```text
+File inbox or web UI -> DocumentIngress / AlertIngress / CodeIngress / ChatIngress (BS)
+                   |
+             AgentWorkflow (BP) -> AgentRunner (BO) -> AI Hub agent + permitted tools
+                   |
+          validated decision routes the message
+                   |
+      +------------+------------+
+      v                         v
+ ResultHandler (BO)        ReviewQueue (BO)
 ```
 
-5. Add an OPENAI_API_KEY to a file called .env in this repo. You can see an example in .env.example. If you want to use another provider, change the Sample.Agent class in src/. If you don't want to use any agents at the moment (e.g. you want to create MCP tools to access from outside the container), create an empty .env file (`touch .env`) or remove the `env_file` tag from [docker-compose.yml](./docker-compose.yml)
+| Deterministic code | AI judgment |
+|---|---|
+| Saving documents, checking tool permissions, enforcing ownership, validating the decision against allowed values, routing | Choosing search terms, comparing notes, proposing a decision |
 
-6. Build the container with: 
+An invalid or failed reply never gets accepted: it goes to review.
+
+## Requirements
+
+- Docker with Compose
+- The **AI Hub Community** image, build `2027.1.0AI.109.0`, from the
+  [EAP portal](https://evaluation.intersystems.com/Eval/early-access/AIHub).
+  It can't be pulled from a registry, and this repo never publishes it.
+- An **OpenAI** API key. Variable: `OPENAI_API_KEY`. The default model is `gpt-4.1-mini`.
+
+## Install
+
+Load the image and give it the short tag used by the Dockerfile:
 
 ```bash
-docker-compose up -d --build 
+docker image load -i iris-community-2027.1.0AI.109.0-docker.tar.gz
+docker tag docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2027.1.0AI.109.0 iris-community:2027.1.0AI.109.0
 ```
 
-## Using IRIS AI Hub Container
+Clone, add your key and start:
 
->[!CAUTION]
-> In the container start-up, the `Sample` directory is installed with IPM/ZPM. If you want to use this template for your own development and want to delete this directory, ensure you edit the module.xml file to remove the Sample directory and invocation, or remove the iris.script `zpm load` command.
+```bash
+git clone https://github.com/xJuan21/mercurius-agents.git
+cd mercurius-agents
+cp .env.example .env      # then put your key in .env
+docker compose up -d --build
+```
 
-### Accessing IRIS 
+The build compiles the code, seeds the sample agents and sets the production to start
+with IRIS.
 
-You can find the Management Portal at http://localhost:52773/csp/sys/UtilHome.csp.
+### Install with IPM
 
-Login with: 
-    - SuperUser / SYS
-
-You can access the IRIS Terminal with:
+On an IRIS AI Hub instance, build `2027.1.0AI.109.0`:
 
 ```objectscript
-docker-compose exec -it iris iris session iris
+zpm "install mercurius-agents"
 ```
 
-or the bash terminal with:
+This installs the backend: agents, production, API and sign-in. The web UI is built by Docker,
+so use the Docker install above for the full app. IRIS needs `OPENAI_API_KEY` in its
+environment.
+
+## Verify
 
 ```bash
-docker-compose exec -it iris bash
+docker compose ps                                                          # shows (healthy)
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:52775/mercurius/   # 200
 ```
 
-### Testing Sample agent 
-
-There is a basic agent in src/Sample.Agent, a simple way to use it from objectscript is to run the following (note this does require an OPENAI_API_KEY to be added to .env before running th container). 
-
-```objectscript
-zn "IRISAPP"
-Set agent = ##class(Sample.Agent).%New()
-Set sc = agent.%Init()
-write:sc'=1 $SYSTEM.Status.GetErrorText(sc), !
-
-Set session = agent.CreateSession()
-
-Set request = "What tools do you have?"
-Set response = agent.Chat(session, request)
-Do ##class(%AI.System).RenderMarkdown(response.Content)
-```
-
-You can also use the agents in streaming mode as follows: 
-
-```objectscript
-// Create Stream Renderer
-Set renderer = ##class(%AI.Shell.StreamRenderer).%New()
-
-// Request requires using both tools defined in Sample.Tools and packaged in Sample.ToolSet
-Set request = "Add a person named Peter aged 16, and then get people younger than 35."
-
-// Stream Response
-Set response = agent.StreamChat(session, request , renderer, "OnChunk")
-
-```
-
-### Try an interactive Chat Shell
-
-```objectscript
-do ##class(%AI.System).Shell("openai", $System.Util.GetEnviron("OPENAI_API_KEY"), "gpt-5-nano", "Sample.ToolSet")
-```
-
-### Test MCP Server
-
-The build process installs an MCP server web application at http://localhost:52773/mcp/sample. You can check this MCP server is running by going to http://localhost:52773/mcp/sample/v1/services. 
-
-For the MCP Server to be usable, there is an additional step of starting this via a Rust binary which connects to IRIS through the web gateway protocol. The Binary is installed in `/usr/irissys/bin` (should already be in PATH).  
-
-A sample configuration is shown in [config_html.toml](./config_http.toml), which serves a remote HTTP server on port 8080 (which is exposed by the docker-compose file). **Please note, the port for the remote HTTP server is not the same as the web server port!** 
-
-A second sample configuration is shown for a local stdio server in [config_stdio.html](./config_stdio.toml). Note, stdio servers require the agent to be running on the same machine as the `iris-mcp-server` binary, making it trickier to use with containers, as such the full instructions to use this are not included here.
-
-#### HTTP 
-
-To start the transport, open a bash terminal within the container: 
+Backend checks, no LLM needed:
 
 ```bash
-docker-compose exec -it iris bash 
+echo 'Do ##class(Mercurius.Test.Acceptance).Run() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
 ```
 
-Then start the `iris-mcp-server`
+This writes test records, and `demo/run.sh` resets them.
 
-```bash 
-iris-mcp-server -c config.toml run 
-```
+## Sign in
 
-You can now connect the MCP server to your MCP Client of choice (e.g. coding agents like claude code) using the address: http://localhost:8080/mcp/sample. 
+Open http://localhost:52775/mercurius/ and sign in with an IRIS account. On a fresh local
+build, that's `_SYSTEM` with the image's default password. To add a user, create it in the
+portal and give it the `MercuriusUser` role.
 
-An example python MCP client is shown in [test_mcp.py](./test_mcp.py), which uses Langchain's MCP adapters module. To try this, run: 
+## Use it
+
+| Page | What it does |
+|---|---|
+| Chat | Sends a message through the production and shows the agent's decision, tools and trace |
+| Agents | Shows the agents. **Build an agent** creates a stored agent that runs immediately |
+| Review | Lists open conflicts. A person resolves, reviews or dismisses each one |
+| Memory, Knowledge | Show what the selected agent holds privately |
+| History | Shows every run, including those from the file services |
+
+To send the sample events through the file services instead:
 
 ```bash
-pip install langchain-mcp-adapters
-python test_mcp.py
+./demo/run.sh
 ```
 
+LLM judgment varies between runs. The Management Portal is at
+http://localhost:52775/csp/sys/UtilHome.csp, and each decision links to its message trace.
 
+## Add an agent
 
-## More Info 
+Use **Build an agent** in the UI: no new class is needed. The runtime adds the reply format
+from the agent's decision values. To drive an agent from a file service too, add a Business
+Service item and set its `AgentName` setting.
 
-For more information on this template and AI Hub in general, see some of the following: 
-- [An Introduction to AI Hub, Part 1: Agents in ObjectScript | ISC Developer Community ](https://community.intersystems.com/post/introduction-ai-hub-part-1-agents-objectscript) and [Part 2: Custom MCP Servers | ISC Developer Community](https://community.intersystems.com/post/introduction-ai-hub-part-2-custom-mcp-servers)
-- [ai-hub-eap](https://github.com/intersystems-community/ai-hub-eap/tree/master) for documentation and bug reporting
-- [Building AI Applications with InterSystems AI Hub | Learning Service (4 mins)](https://learning.intersystems.com/course/view.php?id=2872)
+## Web UI
 
+The UI is an Angular app in `web/`, built in a separate Docker stage. IRIS serves the output.
+
+| Path | Purpose |
+|---|---|
+| `web/src/app/core` | Sign-in, API access and shared state |
+| `web/src/app/layout` | The main layout |
+| `web/src/app/shared` | Reusable components |
+| `web/src/app/features` | One folder per page |
+
+Sign-in uses the JWT support built into IRIS REST web applications. IRIS checks the password
+and provides `/login`, `/refresh` and `/logout`. The access token stays in memory, and the
+refresh token stays in `sessionStorage`, so it ends with the browser tab.
+
+## Why not `EnsLib.AI.Agent.PassthroughOperation`?
+
+IRIS ships an experimental operation and adapter for calling an agent from a production.
+We tested them on build 109 and kept our own `AgentRunner` operation.
+
+| | `EnsLib.AI.Agent.*` | `AgentRunner` |
+|---|---|---|
+| Agent configuration | Built once per production item, at startup | Loaded from a stored record on each message |
+| Agents per item | One | Any |
+| Per-agent tool identity | Not with settings alone: `AuthPolicy` is created with a bare `%New()` | Set by the runtime |
+| A failed LLM call | Message error | Recorded result, routed to review |
+| Message trace | Persistent `LLMResponse` with usage | Our own message classes |
+
+Subclassing the adapter and using its `OnAfterAgentInit` hook does give per-agent tools,
+so it's a possible later direction once the classes are no longer experimental.
+
+## Security
+
+- The runtime binds each tool to its agent, so the LLM never supplies the agent's identity.
+- `Mercurius.Runtime.ToolPolicy` checks every tool against the agent's grants, and
+  ungranted tools aren't shown to the LLM.
+- `KnowledgeService` enforces ownership, so relationships can't cross agents.
+- Every tool call is audited in `Mercurius.Model.AgentToolCall`.
+- Agents get no SQL, filesystem or shell tools.
+- The API requires a token, and users need the `MercuriusAccess` resource. `/mercurius/` serves only the built web files.
+- Use HTTPS or a private network: passwords are sent at sign-in.
+
+## Gotchas found on build 109
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Container restarts with exit 134: `Unable to find/open file iris-main.log` | The repo is bind-mounted over the working directory, and the IRIS user can't write there | `working_dir: /home/irisowner` in `docker-compose.yml` |
+| `<PRIVATE METHOD>` from `ToolManager.AddToolSetInstance()` | The method is private | Use `ToolManager.AddTool(instance)`, which keeps instance properties through `Chat()` |
+| A tool hidden by `%CanList` isn't audited when called | The call fails as `ToolNotFound`, before `%CanExecute` and `%LogDenial` | Also check permissions in your own services |
+| `No repositories are configured` from `zpm` in another namespace | `enable -community` alone doesn't map the repositories | Also run `zpm "enable -map -repos -globally"` in `%SYS` |
+| A static web application returns 404 at its root | It has no default document | Serve `index.html` from a small dispatch class, as `Mercurius.API.Web` does |
+| Every `%CSP.REST` route returns the same output | A method named `Page` overrides `%CSP.Page` | Use another method name |
+| An API call fails on a `Role` column | `Role` is reserved in SQL | Quote it |
+
+## Known limitations
+
+- Knowledge search is basic text matching, so related notes can be missed.
+- A conflict is an AI finding, not a verified fact.
+- An LLM call that hangs has no timeout of its own.
+- API keys are redacted from stored errors. Other sensitive text in an error is not.
+- Chat shows decisions, not free conversation.
+- Agents can be disabled but not deleted from the UI.
+- AI Hub is pre-release software.

@@ -1,0 +1,14 @@
+<div class="page">
+  <h1>Agent memory</h1>
+  <p class="page-lead">Private to {{ store.selected()?.Name }}. Choose another agent in the sidebar to switch.</p>
+  <div class="grid">
+    @for (memory of memories(); track $index) {
+      <div class="tile">
+        <small>{{ memory.MemoryType }}</small>
+        <p>{{ memory.Content }}</p>
+      </div>
+    } @empty {
+      <p class="empty">This agent has no memories yet.</p>
+    }
+  </div>
+</div>

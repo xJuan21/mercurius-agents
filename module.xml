@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Export generator="Cache" version="25">
-  <Document name="ai-hub-dev-template.ZPM">
+  <Document name="mercurius-agents.ZPM">
     <Module>
-      <Name>ai-hub-dev-template</Name>
-      <Version>2.0.9</Version>
-      <Description>AI Hub Development Template</Description>
+      <Name>mercurius-agents</Name>
+      <Version>0.1.0</Version>
+      <Description>Configurable AI Hub agents that make decisions inside IRIS Interoperability productions</Description>
+      <Keywords>ai-hub agents interoperability</Keywords>
       <Packaging>module</Packaging>
+      <SystemRequirements Version=">=2026.3" Interoperability="enabled"/>
       <SourcesRoot>src</SourcesRoot>
-      <Resource Name="Sample.PKG"/>
-      <Invoke Method="Populate" Class="Sample.Person"/>
-      <Invoke Method="Run" Class="Sample.MCPSetup"/>
+      <Resource Name="Mercurius.PKG"/>
+      <Invoke Class="Mercurius.Setup" Method="Install"/>
     </Module>
   </Document>
 </Export>

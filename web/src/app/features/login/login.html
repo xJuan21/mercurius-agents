@@ -1,0 +1,20 @@
+<main class="login">
+  <form class="panel" [formGroup]="form" (ngSubmit)="signIn()">
+    <div class="brand"><span class="logo">m</span>mercurius<span class="dot-accent">.</span></div>
+    <h1>Sign in</h1>
+    <p class="hint">Intelligent companions. Powerful workflows.</p>
+
+    <label class="field-label" for="user">Username</label>
+    <input id="user" class="input" formControlName="user" autocomplete="username" autocapitalize="none" />
+
+    <label class="field-label" for="password">Password</label>
+    <input id="password" class="input" type="password" formControlName="password" autocomplete="current-password" />
+
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+
+    <button type="submit" class="btn primary" [disabled]="busy()">{{ busy() ? 'Signing in…' : 'Sign in' }}</button>
+    <p class="hint footer">Use your InterSystems IRIS account.</p>
+  </form>
+</main>

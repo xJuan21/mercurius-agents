@@ -1,0 +1,5 @@
+.filter { width: auto; min-width: 150px; }
+.run { min-width: 0; }
+.meta { display: flex; gap: 10px; font-size: 13px; }
+.meta span { margin-left: auto; color: var(--muted); font-size: 12px; }
+.input-text { color: var(--body); font-size: 13px; margin: 4px 0 8px; overflow-wrap: anywhere; white-space: pre-wrap; }

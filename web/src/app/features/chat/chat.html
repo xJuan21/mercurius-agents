@@ -1,0 +1,68 @@
+@if (store.selected(); as agent) {
+  <div class="chat-head">
+    <div class="agent-icon"><app-icon [name]="agent.Symbol" /></div>
+    <div>
+      <h1>{{ agent.Name }}</h1>
+      <span class="sub">{{ agent.Role }}</span>
+    </div>
+    <span class="status" [class.off]="agent.Enabled != 1">{{ agent.Enabled == 1 ? 'Ready' : 'Disabled' }}</span>
+  </div>
+
+  <div class="conversation" #conversation>
+    @if (!thread().length && !pending()) {
+      <div class="message">
+        <span class="mini"><app-icon [name]="agent.Symbol" /></span>
+        <div class="bubble">
+          <p>{{ agent.Description }}</p>
+          <p>Send me something to assess. It goes through the IRIS production, and you'll see my decision here.</p>
+        </div>
+      </div>
+    }
+
+    @for (run of thread(); track run.ExecutionId) {
+      <div class="message user"><div class="bubble">{{ run.InputSummary }}</div></div>
+      <div class="message">
+        <span class="mini"><app-icon [name]="agent.Symbol" /></span>
+        <div class="reply"><app-decision-card [execution]="run" /></div>
+      </div>
+    }
+
+    @if (pending()) {
+      <div class="message user"><div class="bubble">{{ pending() }}</div></div>
+      <div class="message">
+        <span class="mini"><app-icon [name]="agent.Symbol" /></span>
+        <div class="bubble thinking" role="status">Running through the production…</div>
+      </div>
+    }
+  </div>
+
+  <div class="composer-wrap">
+    @if (!thread().length) {
+      <div class="suggestions">
+        @for (suggestion of suggestions(); track suggestion) {
+          <button type="button" (click)="draft.set(suggestion)">{{ suggestion }}</button>
+        }
+      </div>
+    }
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+    <form class="composer" (ngSubmit)="send()">
+      <textarea
+        name="message"
+        aria-label="Message agent"
+        rows="2"
+        maxlength="8000"
+        [placeholder]="'Send ' + agent.Name + ' something to assess…'"
+        [ngModel]="draft()"
+        (ngModelChange)="draft.set($event)"
+        (keydown)="onKeydown($event)"
+      ></textarea>
+      <div class="compose-bottom">
+        <app-icon name="spark" />
+        <span>{{ agent.ModelName }}</span>
+        <button class="send" aria-label="Send message" [disabled]="!draft().trim() || pending()"><app-icon name="arrow" /></button>
+      </div>
+    </form>
+  </div>
+}

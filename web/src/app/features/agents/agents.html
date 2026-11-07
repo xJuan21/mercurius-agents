@@ -1,0 +1,18 @@
+<div class="page">
+  <h1>Your agents</h1>
+  <p class="page-lead">Each one is a stored record with its own instructions, tools and knowledge.</p>
+  <div class="grid">
+    @for (agent of store.agents(); track agent.Name) {
+      <button class="tile" (click)="open(agent.Name)">
+        <span class="agent-icon"><app-icon [name]="agent.Symbol" /></span>
+        <h2>{{ agent.Name }}</h2>
+        <small>{{ agent.Role }}</small>
+        <p>{{ agent.Description }}</p>
+      </button>
+    }
+    <button class="tile" (click)="store.form.set('new')">
+      <h2>＋ Build an agent</h2>
+      <p>Choose a role, set its decisions and grant its tools. No code needed.</p>
+    </button>
+  </div>
+</div>

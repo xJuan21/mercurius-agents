@@ -13,10 +13,10 @@ A document arrives at a Business Service. The **Documenter** agent searches its 
 knowledge and decides whether the document relates to, or contradicts, what it already
 knows. A contradiction is recorded as an open finding and routed to review. Alerts follow
 the same production and code, but reach the **Sentinel** agent, which has different
-instructions and tools.
+instructions and tools. **Forge** reviews code against the team's standards.
 
 ```text
-File inbox -> DocumentIngress / AlertIngress (BS)
+File inbox or web UI -> DocumentIngress / AlertIngress / CodeIngress / ChatIngress (BS)
                    |
              AgentWorkflow (BP) -> AgentRunner (BO) -> AI Hub agent + permitted tools
                    |
@@ -65,8 +65,8 @@ with IRIS.
 ## Verify
 
 ```bash
-docker compose ps                                        # shows (healthy)
-curl -s http://localhost:52775/mercurius/api/agents      # lists Documenter and Sentinel
+docker compose ps                                                          # shows (healthy)
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:52775/mercurius/   # 200
 ```
 
 Backend checks, no LLM needed:
@@ -77,29 +77,51 @@ echo 'Do ##class(Mercurius.Test.Acceptance).Run() Halt' | docker compose exec -T
 
 This writes test records, and `demo/run.sh` resets them.
 
-## Run the demo
+## Sign in
+
+Open http://localhost:52775/mercurius/ and sign in with an IRIS account. On a fresh local
+build, that's `_SYSTEM` with the image's default password. To add a user, create it in the
+portal and give it the `MercuriusUser` role.
+
+## Use it
+
+| Page | What it does |
+|---|---|
+| Chat | Sends a message through the production and shows the agent's decision, tools and trace |
+| Agents | Shows the agents. **Build an agent** creates a stored agent that runs immediately |
+| Review | Lists open conflicts. A person resolves, reviews or dismisses each one |
+| Memory, Knowledge | Show what the selected agent holds privately |
+| History | Shows every run, including those from the file services |
+
+To send the sample events through the file services instead:
 
 ```bash
 ./demo/run.sh
 ```
 
-It sends three documents and an alert through the production and prints each decision.
-LLM judgment varies between runs.
-
-| Where | URL |
-|---|---|
-| Dashboard (read-only) | http://localhost:52775/mercurius/ |
-| Production and message traces | http://localhost:52775/csp/sys/UtilHome.csp |
-
-The portal uses `_SYSTEM` and the image default password. Open **Interoperability →
-View → Messages** to see the trace, or use the session number shown by the demo.
+LLM judgment varies between runs. The Management Portal is at
+http://localhost:52775/csp/sys/UtilHome.csp, and each decision links to its message trace.
 
 ## Add an agent
 
-Add a row to `Mercurius.Model.AgentDefinition` with its prompt, `DecisionField`,
-`AllowedDecisions` and `ReviewDecisions`, then grant tools in
-`Mercurius.Model.AgentToolPermission`. See `Mercurius.Setup`. No new class is needed.
-Point a Business Service at it with its `AgentName` setting.
+Use **Build an agent** in the UI: no new class is needed. The runtime adds the reply format
+from the agent's decision values. To drive an agent from a file service too, add a Business
+Service item and set its `AgentName` setting.
+
+## Web UI
+
+The UI is an Angular app in `web/`, built in a separate Docker stage. IRIS serves the output.
+
+| Path | Purpose |
+|---|---|
+| `web/src/app/core` | Sign-in, API access and shared state |
+| `web/src/app/layout` | The main layout |
+| `web/src/app/shared` | Reusable components |
+| `web/src/app/features` | One folder per page |
+
+Sign-in uses the JWT support built into IRIS REST web applications. IRIS checks the password
+and provides `/login`, `/refresh` and `/logout`. The access token stays in memory, and the
+refresh token stays in `sessionStorage`, so it ends with the browser tab.
 
 ## Why not `EnsLib.AI.Agent.PassthroughOperation`?
 
@@ -125,7 +147,8 @@ so it's a possible later direction once the classes are no longer experimental.
 - `KnowledgeService` enforces ownership, so relationships can't cross agents.
 - Every tool call is audited in `Mercurius.Model.AgentToolCall`.
 - Agents get no SQL, filesystem or shell tools.
-- The dashboard has no login and shows stored data. It's for local demos: don't expose it.
+- The API requires a token, and users need the `MercuriusAccess` resource. `/mercurius/` serves only the built web files.
+- Use HTTPS or a private network: passwords are sent at sign-in.
 
 ## Gotchas found on build 109
 
@@ -135,14 +158,16 @@ so it's a possible later direction once the classes are no longer experimental.
 | `<PRIVATE METHOD>` from `ToolManager.AddToolSetInstance()` | The method is private | Use `ToolManager.AddTool(instance)`, which keeps instance properties through `Chat()` |
 | A tool hidden by `%CanList` isn't audited when called | The call fails as `ToolNotFound`, before `%CanExecute` and `%LogDenial` | Also check permissions in your own services |
 | `No repositories are configured` from `zpm` in another namespace | `enable -community` alone doesn't map the repositories | Also run `zpm "enable -map -repos -globally"` in `%SYS` |
+| A static web application returns 404 at its root | It has no default document | Serve `index.html` from a small dispatch class, as `Mercurius.API.Web` does |
 | Every `%CSP.REST` route returns the same output | A method named `Page` overrides `%CSP.Page` | Use another method name |
 | An API call fails on a `Role` column | `Role` is reserved in SQL | Quote it |
 
 ## Known limitations
 
 - Knowledge search is basic text matching, so related notes can be missed.
-- A conflict is an AI finding, not a verified fact. There's no review screen yet.
+- A conflict is an AI finding, not a verified fact.
 - An LLM call that hangs has no timeout of its own.
 - API keys are redacted from stored errors. Other sensitive text in an error is not.
-- Agents are created in code or SQL. There's no create form yet.
+- Chat shows decisions, not free conversation.
+- Agents can be disabled but not deleted from the UI.
 - AI Hub is pre-release software.

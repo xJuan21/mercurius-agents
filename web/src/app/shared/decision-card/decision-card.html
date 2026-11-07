@@ -1,0 +1,34 @@
+<article class="card" [class.review]="needsReview()" [class.failed]="failed()">
+  <header>
+    @if (failed()) {
+      <span class="badge bad">Failed</span>
+    } @else {
+      <strong>{{ execution().Decision || 'No valid decision' }}</strong>
+      <span class="badge" [class.review]="needsReview()" [class.ok]="!needsReview()">
+        {{ needsReview() ? 'Needs review' : 'Accepted' }}
+      </span>
+    }
+  </header>
+
+  @if (failed()) {
+    <p>{{ execution().ErrorDetails }}</p>
+  } @else {
+    <p>{{ reason() }}</p>
+  }
+
+  <ol class="path" aria-label="Production path">
+    <li>Service</li>
+    <li>AgentWorkflow</li>
+    <li>AgentRunner</li>
+    <li>{{ needsReview() ? 'ReviewQueue' : 'ResultHandler' }}</li>
+  </ol>
+
+  <footer>
+    @if (tools().length) {
+      <span>Used: {{ tools().join(' · ') }}</span>
+    } @else {
+      <span>No tools used</span>
+    }
+    <a [href]="trace()" target="_blank" rel="noopener">Message trace {{ execution().InteropSessionId }} ↗</a>
+  </footer>
+</article>

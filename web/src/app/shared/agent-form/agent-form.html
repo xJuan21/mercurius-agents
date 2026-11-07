@@ -1,0 +1,65 @@
+<dialog #dialog (close)="store.form.set(null)" aria-labelledby="agent-form-title">
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <h2 id="agent-form-title">{{ editing() ? 'Edit ' + editing()!.Name : 'Build an agent' }}</h2>
+    <p class="hint">It's saved in IRIS and can run in the production straight away.</p>
+
+    <label class="field-label" for="agent-name">Agent name</label>
+    <input id="agent-name" class="input" formControlName="name" maxlength="30" placeholder="e.g. Atlas" />
+    @if (form.controls.name.touched && form.controls.name.invalid) {
+      <p class="error">Start with a letter, then use letters, digits or hyphens.</p>
+    }
+
+    <label class="field-label" for="agent-role">Role</label>
+    <input id="agent-role" class="input" formControlName="role" placeholder="e.g. Release reviewer" />
+
+    <label class="field-label" for="agent-description">Purpose</label>
+    <input id="agent-description" class="input" formControlName="description" placeholder="One line shown on the agent's card" />
+
+    <label class="field-label" for="agent-tone">Tone</label>
+    <select id="agent-tone" class="input" formControlName="tone">
+      @for (tone of tones; track tone) {
+        <option [value]="tone">{{ tone }}</option>
+      }
+      @if (editing() && !tones.includes(editing()!.Tone)) {
+        <option [value]="editing()!.Tone">{{ editing()!.Tone }}</option>
+      }
+    </select>
+
+    <label class="field-label" for="agent-instructions">Instructions</label>
+    <textarea id="agent-instructions" class="input" formControlName="instructions" placeholder="What should this agent decide, and how?"></textarea>
+
+    <label class="field-label" for="agent-decisions">Decisions it can make</label>
+    <input id="agent-decisions" class="input" formControlName="allowedDecisions" />
+    <p class="hint">Lowercase words, separated by commas. Anything else goes to review.</p>
+
+    <label class="field-label" for="agent-review">Decisions that need a person</label>
+    <input id="agent-review" class="input" formControlName="reviewDecisions" />
+
+    <fieldset>
+      <legend class="field-label">Permitted tools</legend>
+      @for (tool of store.tools(); track tool.key) {
+        <label class="check">
+          <input
+            type="checkbox"
+            [checked]="selectedTools().includes(tool.key)"
+            (change)="toggleTool(tool.key, $any($event.target).checked)"
+          />
+          <span>{{ tool.label }}<small>{{ tool.description }}</small></span>
+        </label>
+      }
+    </fieldset>
+
+    @if (editing()) {
+      <label class="check"><input type="checkbox" formControlName="enabled" /><span>Enabled</span></label>
+    }
+
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <button type="button" class="btn" (click)="close()">Cancel</button>
+      <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save agent' }}</button>
+    </div>
+  </form>
+</dialog>

@@ -1,0 +1,8 @@
+.top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.top small { margin-left: auto; color: var(--muted); }
+.finding { margin: 12px 0; }
+.compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.compare > div { border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+h3 { font: 600 12px 'DM Sans', sans-serif; color: var(--muted); margin: 0 0 6px; }
+b { font-size: 13px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }

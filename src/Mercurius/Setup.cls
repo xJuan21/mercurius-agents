@@ -12,13 +12,14 @@ ClassMethod Install() As %Status
     Return ##class(Ens.Director).SetAutoStart("Mercurius.Interop.Production")
 }
 
-/// Creates /mercurius for the static UI and /mercurius/api for the token-protected API.
+/// Creates /mercurius for the web files, which hold no data, and /mercurius/api for the token-protected API.
 ClassMethod CreateWebApps() As %Status
 {
     New $NAMESPACE
     Set $NAMESPACE = "%SYS"
     Set Resource = "MercuriusAccess"
     Set Role = "MercuriusUser"
+    Set WebRole = "MercuriusWeb"
     If ('##class(Security.Resources).Exists(Resource)) {
         Set SC = ##class(Security.Resources).Create(Resource, "Sign in to Mercurius Agents", "", "")
         Return:($$$ISERR(SC)) SC
@@ -28,12 +29,17 @@ ClassMethod CreateWebApps() As %Status
         Return:($$$ISERR(SC)) SC
     }
 
+    If ('##class(Security.Roles).Exists(WebRole)) {
+        Set SC = ##class(Security.Roles).Create(WebRole, "Serve the Mercurius web files", "%DB_IRISAPP_CODE:R,%DB_IRISAPP_DATA:R")
+        Return:($$$ISERR(SC)) SC
+    }
+
     Do:(##class(Security.Applications).Exists("/mercurius")) ##class(Security.Applications).Delete("/mercurius")
     Set Properties("NameSpace") = "IRISAPP"
-    Set Properties("Path") = "/usr/irissys/csp/mercurius"
+    Set Properties("DispatchClass") = "Mercurius.API.Web"
     Set Properties("AutheEnabled") = 64
+    Set Properties("MatchRoles") = ":"_WebRole
     Set Properties("Enabled") = 1
-    Set Properties("ServeFiles") = 1
     Set SC = ##class(Security.Applications).Create("/mercurius", .Properties)
     Return:($$$ISERR(SC)) SC
 
@@ -57,7 +63,7 @@ ClassMethod SeedAgents() As %Status
     Do ##class(%File).CreateDirectoryChain("/home/irisowner/inbox/alerts")
     Do ##class(%File).CreateDirectoryChain("/home/irisowner/inbox/code")
 
-    Set Prompt = "You guard technical documentation. Each new note is already saved and its node id is given. Use SearchKnowledge with its key terms and ignore the new node itself in the results. Only use ids returned by SearchKnowledge. Choose exactly one decision. conflict: the new note and an existing node make incompatible claims about the same subject, so both cannot be true; use FlagConflict with the new node first. related: an existing node covers the same subject and the new note adds to it without contradicting it, for example an extra step or detail; use CreateRelationship with the new node first and RELATES_TO. none: no existing node covers the same subject, even if search returned results; a shared word is not enough; use no other tool. Your finding is a proposal for a person, not a fact."
+    Set Prompt = "You guard technical documentation. Each new note is already saved and its node id is given. Use SearchKnowledge with its key terms and ignore the new node itself in the results. Only use ids returned by SearchKnowledge. Choose exactly one decision. conflict: the new note and an existing node make incompatible claims about the same subject, so both cannot be true; use FlagConflict with the new node first. related: an existing node covers the same subject and the new note adds to it without contradicting it, for example an extra step or detail; use CreateRelationship with the new node first and RELATES_TO. none: no existing node covers the same subject, even if search returned results; a shared word is not enough; use no other tool. Your finding is a proposal for a person, not a fact. In your reason, refer to notes by their titles or subjects, never by node ids."
     Set SC = ..SaveAgent("Documenter", "Knowledge and documentation", "I connect the dots in your knowledge. I organize notes, surface relationships and flag contradictions so nothing gets lost.", Prompt, "Clear and thoughtful", "related,conflict,none", "conflict", "Document", "memory")
     Return:($$$ISERR(SC)) SC
 

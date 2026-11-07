@@ -26,7 +26,7 @@ ClassMethod ShowDashboard() As %Status
 
 ClassMethod Agents() As %Status
 {
-    Return ..WriteQuery("SELECT Name, Role, ModelName, DecisionField, AllowedDecisions, ReviewDecisions, Enabled, (SELECT LIST(ToolKey) FROM Mercurius_Model.AgentToolPermission P WHERE P.AgentName = A.Name) AS Tools FROM Mercurius_Model.AgentDefinition A ORDER BY Name")
+    Return ..WriteQuery("SELECT Name, ""Role"", ModelName, DecisionField, AllowedDecisions, ReviewDecisions, Enabled, (SELECT LIST(ToolKey) FROM Mercurius_Model.AgentToolPermission P WHERE P.AgentName = A.Name) AS Tools FROM Mercurius_Model.AgentDefinition A ORDER BY Name")
 }
 
 ClassMethod Executions() As %Status

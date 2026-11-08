@@ -196,6 +196,14 @@ Sign-in uses the JWT support built into IRIS REST web applications. IRIS checks 
 and provides `/login`, `/refresh` and `/logout`. The access token stays in memory, and the
 refresh token stays in `sessionStorage`, so it ends with the browser tab.
 
+## Contest bonuses
+
+| Bonus | Where to see it |
+|---|---|
+| Docker | `Dockerfile` and `docker-compose.yml`: `docker compose up -d --build` |
+| IPM (ZPM) | `module.xml`: `zpm "install mercurius-agents"` installs the backend, and `zpm "mercurius-agents test"` runs the tests |
+| AI Hub bugs | [ai-hub-eap-bugreports #25](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/25): a tool hidden by `%CanList` is rejected with no audit record. [#26](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/26): `iris-main` aborts with exit 134 when the working directory isn't writable |
+
 ## Credits
 
 Copyright (c) 2026 Juan Mota Sanchez. Released under the [MIT License](LICENSE).

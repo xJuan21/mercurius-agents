@@ -70,11 +70,11 @@ An invalid or failed reply never gets accepted: it goes to review.
 ## Measured results
 
 `Mercurius.Test.Eval` sends 55 labelled inputs through the production, with fresh sample
-knowledge for each. One run per agent on build 109, 2026-11-07 and 2026-11-08:
+knowledge for each. On build 109, 2026-11-07 and 2026-11-08:
 
 | Agent | Model | Correct | Search found the right note | Estimated cost, whole set |
 |---|---|---|---|---|
-| Documenter | gpt-4.1-mini | 13 of 15 | 10 of 10 | $0.005 |
+| Documenter | gpt-4.1 | 13 of 15, twice | 10 of 10 | $0.028 |
 | Sentinel | gpt-4.1-mini | 14 of 15 | n/a | $0.002 |
 | Forge | gpt-4.1 | 14 of 15 | n/a | $0.021 |
 | Query | gpt-4.1-mini | 8 of 10 | n/a | $0.005 |
@@ -83,7 +83,7 @@ knowledge for each. One run per agent on build 109, 2026-11-07 and 2026-11-08:
 - Query got every answerable question right: all five generated queries were also checked by hand. Its misses were a guess on a vague question, and "clarify" instead of "refused" for another schema.
 - The inputs were written by the author, and model output varies between runs. Treat these as a smoke test, not a benchmark.
 - Costs come from list prices and count only the final model call of each run, so they're lower bounds.
-- Documenter scored 15 of 15 with earlier example notes, and 13 of 15 with the current ones: it read a weekly-only backup as related, not a conflict, and a restore test as unrelated.
+- Documenter: every conflict was caught in both runs. The two misses were the same both times: notes about failed-file handling and restore tests were judged unrelated to the runbook and backup policy, which is debatable. On `gpt-4.1-mini` it scored 12 to 15 of 15 depending on the run and the example notes, and sometimes missed the main demo conflict, so it uses `gpt-4.1`.
 - Basic text search found the right note every time, so vector search isn't needed at this size.
 
 Run it yourself:

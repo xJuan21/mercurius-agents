@@ -63,7 +63,7 @@ ClassMethod SeedAgents() As %Status
     Do ##class(%File).CreateDirectoryChain("/home/irisowner/inbox/alerts")
     Do ##class(%File).CreateDirectoryChain("/home/irisowner/inbox/code")
 
-    Set Prompt = "You guard technical documentation. Each new note is already saved and its node id is given. Use SearchKnowledge with its key terms and ignore the new node itself in the results. Only use ids returned by SearchKnowledge. Choose exactly one decision. conflict: the new note and an existing node make incompatible claims about the same subject, so both cannot be true; use FlagConflict with the new node first. related: an existing node covers the same subject and the new note adds to it without contradicting it, for example an extra step or detail; use CreateRelationship with the new node first and RELATES_TO. none: no existing node covers the same subject, even if search returned results; a shared word is not enough; use no other tool. Your finding is a proposal for a person, not a fact. In your reason, refer to notes by their titles or subjects, never by node ids. When you find a conflict, also use ProposeKnowledgeUpdate on the older note with corrected content, so a person can approve the fix."
+    Set Prompt = "You guard technical documentation. Each new note is already saved and its node id is given. Use SearchKnowledge with its key terms and ignore the new node itself in the results. Only use ids returned by SearchKnowledge. Choose exactly one decision. conflict: the new note and an existing node make incompatible claims about the same subject, so both cannot be true. A note saying something changed, was replaced, stopped or now works differently (now, instead of, no longer, only) conflicts with an older node that describes the old way, even if it sounds like an update. But when the old way still applies and something is added to it (in addition to, also, plus), that is related, not a conflict; use FlagConflict with the new node first. related: an existing node covers the same subject and the new note adds to it without contradicting it, for example an extra step or detail; use CreateRelationship with the new node first and RELATES_TO. none: no existing node covers the same subject, even if search returned results; a shared word is not enough; use no other tool. Your finding is a proposal for a person, not a fact. In your reason, refer to notes by their titles or subjects, never by node ids. When you find a conflict, also use ProposeKnowledgeUpdate on the older note with corrected content, so a person can approve the fix."
     Set SC = ..SaveAgent("Documenter", "Knowledge and documentation", "I connect the dots in your knowledge. I organize notes, surface relationships and flag contradictions so nothing gets lost.", Prompt, "Clear and thoughtful", "related,conflict,none", "conflict", "Document", "memory", ..Lines("instead of => conflict", "no longer => conflict", "replaced => conflict", "in addition to => related", "also => related"))
     Return:($$$ISERR(SC)) SC
 
@@ -74,11 +74,14 @@ ClassMethod SeedAgents() As %Status
     Set Prompt = "You review ObjectScript against the team's coding standards. Use CheckSyntax on the code first: a syntax error always means changes, unless the code is unsafe. Then use SearchKnowledge for the standards and the review checklist. ready: no standard is broken and nothing is unsafe; short or simple code is fine. changes: it breaks a specific standard, such as a lowercase or abbreviated command, a lowercase variable, or a postconditional without parentheses. blocked: it deletes or exposes data, runs arbitrary input or operating system commands, or stores a password or secret in plain text; this outranks changes. Name the specific problem in your reason."
     Set SC = ..SaveAgent("Forge", "Builder and code assistant", "I help you explore implementation ideas, review code and turn a technical plan into clear next steps.", Prompt, "Precise and technical", "ready,changes,blocked", "changes,blocked", "Event", "agents", ..Lines("kill ^ => blocked", "xecute => blocked", "$zf( => blocked", "set x= => changes", "$get( => changes"))
     Return:($$$ISERR(SC)) SC
-    // Smaller models misjudged valid code in the measured runs, so Forge uses gpt-4.1.
-    Set Forge = ##class(Mercurius.Model.AgentDefinition).NameIndexOpen("Forge")
-    Set Forge.ModelName = "gpt-4.1"
-    Set SC = Forge.%Save()
-    Return:($$$ISERR(SC)) SC
+    // gpt-4.1-mini misjudged valid code and missed conflicts in the measured runs, so these
+    // two agents default to gpt-4.1. Users can change the model in the agent form.
+    For Name = "Forge", "Documenter" {
+        Set Agent = ##class(Mercurius.Model.AgentDefinition).NameIndexOpen(Name)
+        Set Agent.ModelName = "gpt-4.1"
+        Set SC = Agent.%Save()
+        Return:($$$ISERR(SC)) SC
+    }
 
     For Tool = "SearchKnowledge", "CreateRelationship", "FlagConflict", "GetAgentMemory", "SaveAgentMemory", "ProposeKnowledgeUpdate" {
         Set SC = ..Grant("Documenter", Tool)

@@ -11,6 +11,7 @@
       <SourcesRoot>src</SourcesRoot>
       <Resource Name="Mercurius.PKG"/>
       <Invoke Class="Mercurius.Setup" Method="Install"/>
+      <UnitTest Name="/src" Package="Mercurius.Test.Unit" Phase="test"/>
     </Module>
   </Document>
 </Export>

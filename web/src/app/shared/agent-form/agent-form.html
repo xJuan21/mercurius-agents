@@ -25,6 +25,29 @@
       }
     </select>
 
+    <div class="model-row">
+      <div>
+        <label class="field-label" for="agent-provider">Provider</label>
+        <select id="agent-provider" class="input" formControlName="provider" (change)="chooseProvider($any($event.target).value)">
+          @for (entry of catalog(); track entry.provider) {
+            <option [value]="entry.provider">{{ entry.provider }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="agent-model">Model</label>
+        <select id="agent-model" class="input" formControlName="model">
+          @for (model of models(); track model.id) {
+            <option [value]="model.id">{{ model.id }}{{ model.priced ? '' : ' (no cost estimate)' }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <p class="hint">
+      Listed from each provider with a key set.
+      <button type="button" class="link" (click)="loadModels(true)" [disabled]="loadingModels()">{{ loadingModels() ? 'Refreshing…' : 'Refresh list' }}</button>
+    </p>
+
     <label class="field-label" for="agent-instructions">Instructions</label>
     <textarea id="agent-instructions" class="input" formControlName="instructions" placeholder="What should this agent decide, and how?"></textarea>
 
@@ -34,6 +57,10 @@
 
     <label class="field-label" for="agent-review">Decisions that need a person</label>
     <input id="agent-review" class="input" formControlName="reviewDecisions" />
+
+    <label class="field-label" for="agent-rules">Fallback rules</label>
+    <textarea id="agent-rules" class="input rules" formControlName="fallbackRules" placeholder="instead of => conflict"></textarea>
+    <p class="hint">Used only when the AI can't answer. One per line: phrase => decision. Rule decisions always go to review.</p>
 
     <fieldset>
       <legend class="field-label">Permitted tools</legend>

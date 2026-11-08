@@ -9,6 +9,9 @@ import {
   Execution,
   Knowledge,
   Memory,
+  Notification,
+  ProviderModels,
+  Proposal,
   Summary,
   Tool,
 } from './api.models';
@@ -36,6 +39,12 @@ export class ApiService {
     return this.http.post(`${API_URL}/agents/${encodeURIComponent(agent)}/messages`, { text });
   }
 
+  /** Chat models per configured provider, cached by IRIS for a day. */
+  models(refresh = false): Observable<ProviderModels[]> {
+    const params = refresh ? new HttpParams().set('refresh', '1') : new HttpParams();
+    return this.http.get<ProviderModels[]>(`${API_URL}/models`, { params });
+  }
+
   tools(): Observable<Tool[]> {
     return this.http.get<Tool[]>(`${API_URL}/tools`);
   }
@@ -54,6 +63,19 @@ export class ApiService {
 
   reviewConflict(id: string, status: ConflictStatus): Observable<unknown> {
     return this.http.put(`${API_URL}/conflicts/${id}`, { status });
+  }
+
+  proposals(): Observable<Proposal[]> {
+    return this.http.get<Proposal[]>(`${API_URL}/proposals`);
+  }
+
+  /** Approval re-checks the proposal and runs it through the production. */
+  decideProposal(id: string, status: 'Approved' | 'Rejected'): Observable<unknown> {
+    return this.http.put(`${API_URL}/proposals/${id}`, { status });
+  }
+
+  notifications(): Observable<Notification[]> {
+    return this.http.get<Notification[]>(`${API_URL}/notifications`);
   }
 
   knowledge(agent: string): Observable<Knowledge> {

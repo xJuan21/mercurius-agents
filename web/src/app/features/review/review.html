@@ -2,13 +2,66 @@
   <div class="page-head">
     <div>
       <h1>Review</h1>
-      <p class="page-lead">Potential contradictions found by agents. These are AI findings, and you make the call.</p>
+      <p class="page-lead">Actions agents want to take, and contradictions they found. Nothing happens until you decide.</p>
     </div>
     <button class="btn" (click)="showAll.set(!showAll())">{{ showAll() ? 'Show open only' : 'Show all' }}</button>
   </div>
 
+  @if (notice()) {
+    <p class="notice" role="status">{{ notice() }}</p>
+  }
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  <h2 class="section-title">Proposed actions</h2>
   <div class="stack">
-    @for (conflict of visible(); track conflict.Id) {
+    @for (proposal of visibleProposals(); track proposal.Id) {
+      <article class="tile">
+        <div class="top">
+          <span class="badge" [class.review]="proposal.Status === 'Proposed'" [class.ok]="proposal.Status === 'Executed'" [class.bad]="proposal.Status === 'Failed'">
+            {{ proposal.Status === 'Proposed' ? 'Waiting for approval' : proposal.Status }}
+          </span>
+          <b>{{ proposal.label }}</b>
+          <small>{{ proposal.AgentName }} · {{ proposal.CreatedAt }}</small>
+        </div>
+
+        @if (proposal.ActionType === 'Notify') {
+          <p class="finding">{{ proposal.message }}</p>
+        } @else {
+          <p class="finding">{{ proposal.reason }}</p>
+          <div class="compare">
+            <div>
+              <h3>{{ proposal.title }}, now</h3>
+              <p>{{ proposal.before }}</p>
+            </div>
+            <div>
+              <h3>Proposed</h3>
+              <p>{{ proposal.after }}</p>
+            </div>
+          </div>
+        }
+
+        @if (proposal.Status === 'Proposed') {
+          <div class="actions">
+            <button class="btn primary" [disabled]="busy() === proposal.Id" (click)="decide(proposal, 'Approved')">
+              {{ busy() === proposal.Id ? 'Running…' : 'Approve and run' }}
+            </button>
+            <button class="btn" [disabled]="busy() === proposal.Id" (click)="decide(proposal, 'Rejected')">Reject</button>
+          </div>
+          <p class="hint">Expires {{ proposal.ExpiresAt }}. Approval runs it through the production.</p>
+        } @else if (proposal.DecidedBy) {
+          <p class="hint">{{ proposal.Status }} after {{ proposal.DecidedBy }} decided on {{ proposal.DecidedAt }}{{ proposal.Result ? ': ' + proposal.Result : '' }}</p>
+        }
+      </article>
+    } @empty {
+      <p class="empty">No actions waiting.</p>
+    }
+  </div>
+
+  <h2 class="section-title">Possible contradictions</h2>
+  <div class="stack">
+    @for (conflict of visibleConflicts(); track conflict.Id) {
       <article class="tile">
         <div class="top">
           <span class="badge" [class.review]="conflict.Status === 'Open'" [class.ok]="conflict.Status !== 'Open'">

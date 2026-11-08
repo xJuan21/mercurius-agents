@@ -28,7 +28,10 @@ Method Run(pRequest As Mercurius.Interop.Msg.AgentRequest, Output pResponse As M
         Set SC = ##class(Mercurius.Runtime.KnowledgeService).SaveNode(pRequest.AgentName, pRequest.CorrelationId, pRequest.Payload, "Document", .NodeId)
         Set:($$$ISOK(SC)) Input = "New note, already saved as node "_NodeId_":"_$CHAR(10)_pRequest.Payload
     }
-    Set:($$$ISOK(SC)) SC = ##class(Mercurius.Runtime.AgentExecutor).Execute(pRequest.AgentName, Input, .Reply, pResponse.ExecutionId)
+    Set Definition = ##class(Mercurius.Model.AgentDefinition).NameIndexOpen(pRequest.AgentName)
+    Set:($ISOBJECT(Definition)) pResponse.Engine = "AI"
+    Set:($ISOBJECT(Definition)) Execution.ModelName = Definition.ModelName
+    Set:($$$ISOK(SC)) SC = ##class(Mercurius.Runtime.AgentExecutor).Execute(pRequest.AgentName, Input, .Reply, pResponse.ExecutionId, .Usage)
     If ($$$ISOK(SC)) {
         Set SC = ##class(Mercurius.Runtime.DecisionPolicy).Evaluate(pRequest.AgentName, Reply, .Decision, .NeedsReview)
     }
@@ -37,6 +40,18 @@ Method Run(pRequest As Mercurius.Interop.Msg.AgentRequest, Output pResponse As M
         Set pResponse.Result = Reply
         Set pResponse.Decision = Decision
         Set pResponse.NeedsReview = NeedsReview
+        Set pResponse.PromptTokens = Usage.%Get("prompt_tokens")
+        Set pResponse.CompletionTokens = Usage.%Get("completion_tokens")
+        Set pResponse.CostUSD = ##class(Mercurius.Runtime.Pricing).Estimate(Execution.ModelName, pResponse.PromptTokens, pResponse.CompletionTokens)
+    } ElseIf ($ISOBJECT(Definition)) {
+        // The AI couldn't answer, so the stored rules decide. Rule decisions always go to review.
+        Set pResponse.ErrorMessage = ##class(Mercurius.Runtime.AgentExecutor).Redact($SYSTEM.Status.GetErrorText(SC))
+        $$$LOGWARNING("AI unavailable, using rules: "_pResponse.ErrorMessage)
+        Set pResponse.Engine = "Rules"
+        Set pResponse.Status = "Completed"
+        Set pResponse.Decision = ##class(Mercurius.Runtime.RulesEngine).Evaluate(Definition, pRequest.Payload, .Rule)
+        Set pResponse.Result = {"reason":($SELECT(Rule '= "":"Rule matched: "_Rule, 1:"No rule matched; a person should decide."))}.%ToJSON()
+        Set pResponse.NeedsReview = 1
     } Else {
         Set pResponse.Status = "Failed"
         Set pResponse.ErrorMessage = ##class(Mercurius.Runtime.AgentExecutor).Redact($SYSTEM.Status.GetErrorText(SC))
@@ -47,6 +62,10 @@ Method Run(pRequest As Mercurius.Interop.Msg.AgentRequest, Output pResponse As M
     Set Execution.Decision = pResponse.Decision
     Set Execution.OutputSummary = pResponse.Result
     Set Execution.ErrorDetails = pResponse.ErrorMessage
+    Set Execution.Engine = pResponse.Engine
+    Set Execution.PromptTokens = pResponse.PromptTokens
+    Set Execution.CompletionTokens = pResponse.CompletionTokens
+    Set Execution.CostUSD = pResponse.CostUSD
     Set Execution.CompletedAt = $ZDATETIME($HOROLOG, 3)
     Return Execution.%Save()
 }

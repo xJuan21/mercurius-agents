@@ -1,19 +1,34 @@
 # Mercurius Agents
 
-Configurable AI agents that make decisions inside InterSystems IRIS Interoperability
-productions, built on IRIS AI Hub.
+An AI operations desk for an InterSystems IRIS integration team, built on IRIS AI Hub and
+Interoperability. Your team defines the agents; each one works inside a real production
+and acts only with a person's approval.
+
+![Documenter finds a contradiction and proposes a fix](docs/screenshots/chat-documenter.png)
+
+## The problem
+
+An integration team's knowledge drifts. A runbook still says partner orders arrive by SFTP
+weeks after the team moved partners to a REST API. Alerts arrive faster than anyone
+can rate them. Code reviews wait, and nobody knows what the AI tools cost.
+
+## A day with Mercurius
+
+| When | Agent | What happens |
+|---|---|---|
+| A new decision note is filed | **Documenter** | Finds the old runbook it contradicts, flags the conflict and proposes corrected text. A person approves, and the note is fixed through the production |
+| A disk alert arrives | **Sentinel** | Checks known issues, rates it high and proposes a message for the person on call |
+| A developer pastes a line | **Forge** | Compiles it without running it, checks it against the team's standards and names the broken rule |
+| A lead asks "what did the agents cost?" | **Query** | Writes the SQL, validates it without running it, and shows it |
+| A new need appears | **Build an agent** | Anyone with access creates a new agent in the UI, with its own decisions, tools and fallback rules. It runs in the production straight away, with no new class |
 
 Agents are stored records, not generated classes. One runtime runs them all. Each agent has
-its own instructions, permitted tools, private knowledge and memory. Its decision then
-routes a real message through a production.
+its own instructions, model, permitted tools, private knowledge and memory.
 
-## What it does
+**No OpenAI key?** The production still runs: each agent's fallback rules decide, the run is
+labelled **Rules, not AI**, and it goes to review.
 
-A document arrives at a Business Service. The **Documenter** agent searches its private
-knowledge and decides whether the document relates to, or contradicts, what it already
-knows. A contradiction is recorded as an open finding and routed to review. Alerts follow
-the same production and code, but reach the **Sentinel** agent, which has different
-instructions and tools. **Forge** reviews code against the team's standards.
+## How it works
 
 ```text
 File inbox or web UI -> DocumentIngress / AlertIngress / CodeIngress / ChatIngress (BS)
@@ -33,6 +48,50 @@ File inbox or web UI -> DocumentIngress / AlertIngress / CodeIngress / ChatIngre
 
 An invalid or failed reply never gets accepted: it goes to review.
 
+## What agents can do
+
+| Capability | How |
+|---|---|
+| Decide | Every run ends in a decision from the agent's own list. Invalid replies go to review |
+| Use tools | Search knowledge, link notes, flag conflicts, read and save memory, each granted per agent |
+| Propose actions | Send a notification, or update a note. Nothing runs until a person approves it in **Review**; approval re-checks the proposal and runs it through the production |
+| Keep working without AI | If there's no key or the provider fails, the agent's fallback rules decide. These runs are labelled **Rules, not AI** and always go to review |
+| Check, not guess | Forge compiles code as a throwaway routine, which never runs it. Query prepares SQL without running it, only SELECT, only the `Mercurius_Model` schema |
+| Choose their model | Each agent has its own provider and model, chosen from the provider's live list. Only providers with a key are offered |
+| Show their cost | Each run records the model, tokens and an estimated cost |
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Query writes and validates SQL](docs/screenshots/chat-query.png) | ![Proposed actions wait for approval](docs/screenshots/review.png) |
+| ![History with tokens and cost](docs/screenshots/history.png) | ![Build an agent](docs/screenshots/builder.png) |
+
+## Measured results
+
+`Mercurius.Test.Eval` sends 55 labelled inputs through the production, with fresh sample
+knowledge for each. On build 109, 2026-11-07 and 2026-11-08:
+
+| Agent | Model | Correct | Search found the right note | Estimated cost, whole set |
+|---|---|---|---|---|
+| Documenter | gpt-4.1 | 13 of 15, twice | 10 of 10 | $0.028 |
+| Sentinel | gpt-4.1-mini | 14 of 15 | n/a | $0.002 |
+| Forge | gpt-4.1 | 14 of 15 | n/a | $0.021 |
+| Query | gpt-4.1-mini | 8 of 10 | n/a | $0.005 |
+
+- Forge went from 12 to 14 of 15 once it could compile code with `CheckSyntax`. On `gpt-4.1-mini` it scored 9 to 11, so it uses `gpt-4.1`.
+- Query got every answerable question right: all five generated queries were also checked by hand. Its misses were a guess on a vague question, and "clarify" instead of "refused" for another schema.
+- The inputs were written by the author, and model output varies between runs. Treat these as a smoke test, not a benchmark.
+- Costs come from list prices and count only the final model call of each run, so they're lower bounds.
+- Documenter: every conflict was caught in both runs. The two misses were the same both times: notes about failed-file handling and restore tests were judged unrelated to the runbook and backup policy, which is debatable. On `gpt-4.1-mini` it scored 12 to 15 of 15 depending on the run and the example notes, and sometimes missed the main demo conflict, so it uses `gpt-4.1`.
+- Basic text search found the right note every time, so vector search isn't needed at this size.
+
+Run it yourself:
+
+```bash
+echo 'Do ##class(Mercurius.Test.Eval).Run() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
+```
+
 ## Requirements
 
 - Docker with Compose
@@ -40,6 +99,7 @@ An invalid or failed reply never gets accepted: it goes to review.
   [EAP portal](https://evaluation.intersystems.com/Eval/early-access/AIHub).
   It can't be pulled from a registry, and this repo never publishes it.
 - An **OpenAI** API key. Variable: `OPENAI_API_KEY`. The default model is `gpt-4.1-mini`.
+- Optional: an **Anthropic** API key, `ANTHROPIC_API_KEY`. Each agent can then use a Claude model, chosen in the agent form.
 
 ## Install
 
@@ -84,7 +144,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:52775/mercurius/   # 2
 Backend checks, no LLM needed:
 
 ```bash
-echo 'Do ##class(Mercurius.Test.Acceptance).Run() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
+echo 'zpm "mercurius-agents test -only" Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
 ```
 
 This writes test records, and `demo/run.sh` resets them.
@@ -101,7 +161,8 @@ portal and give it the `MercuriusUser` role.
 |---|---|
 | Chat | Sends a message through the production and shows the agent's decision, tools and trace |
 | Agents | Shows the agents. **Build an agent** creates a stored agent that runs immediately |
-| Review | Lists open conflicts. A person resolves, reviews or dismisses each one |
+| Review | Approve or reject proposed actions, and resolve possible contradictions |
+| Inbox | Notifications a person approved |
 | Memory, Knowledge | Show what the selected agent holds privately |
 | History | Shows every run, including those from the file services |
 
@@ -134,6 +195,22 @@ The UI is an Angular app in `web/`, built in a separate Docker stage. IRIS serve
 Sign-in uses the JWT support built into IRIS REST web applications. IRIS checks the password
 and provides `/login`, `/refresh` and `/logout`. The access token stays in memory, and the
 refresh token stays in `sessionStorage`, so it ends with the browser tab.
+
+## Contest bonuses
+
+| Bonus | Where to see it |
+|---|---|
+| Docker | `Dockerfile` and `docker-compose.yml`: `docker compose up -d --build` |
+| IPM (ZPM) | `module.xml`: `zpm "install mercurius-agents"` installs the backend, and `zpm "mercurius-agents test"` runs the tests |
+| AI Hub bugs | [ai-hub-eap-bugreports #25](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/25): a tool hidden by `%CanList` is rejected with no audit record. [#26](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/26): `iris-main` aborts with exit 134 when the working directory isn't writable |
+
+## Credits
+
+Copyright (c) 2026 Juan Mota Sanchez. Released under the [MIT License](LICENSE).
+
+Forge's review checklist comes from the `objectscript-review` skill in
+[iris-agentic-dev](https://github.com/intersystems-community/iris-agentic-dev) (InterSystems,
+MIT License). Built on the [ai-hub-dev-template](https://github.com/intersystems-community/ai-hub-dev-template).
 
 ## Why not `EnsLib.AI.Agent.PassthroughOperation`?
 
@@ -178,6 +255,7 @@ so it's a possible later direction once the classes are no longer experimental.
 
 - Knowledge search is basic text matching, so related notes can be missed.
 - A conflict is an AI finding, not a verified fact.
+- Approved notifications go to the in-app inbox. To deliver them elsewhere, point the `NotifyTarget` setting of `ActionIngress` at another operation.
 - An LLM call that hangs has no timeout of its own.
 - API keys are redacted from stored errors. Other sensitive text in an error is not.
 - Chat shows decisions, not free conversation.

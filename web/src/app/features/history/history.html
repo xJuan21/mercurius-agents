@@ -19,6 +19,9 @@
       <div class="stat"><b>{{ totals.OpenConflicts || 0 }}</b><span>Open conflicts</span></div>
       <div class="stat"><b>{{ totals.Failed || 0 }}</b><span>Failed</span></div>
       <div class="stat"><b>{{ totals.ToolCalls || 0 }}</b><span>Tool calls</span></div>
+      <div class="stat"><b>{{ totals.RuleRuns || 0 }}</b><span>Decided by rules</span></div>
+      <div class="stat"><b>{{ totals.Tokens || 0 }}</b><span>Tokens, final calls</span></div>
+      <div class="stat"><b>{{ dollars(totals.CostUSD) }}</b><span>Estimated cost, at least</span></div>
     </div>
   }
 

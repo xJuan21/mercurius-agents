@@ -6,3 +6,7 @@
 h3 { font: 600 12px 'DM Sans', sans-serif; color: var(--muted); margin: 0 0 6px; }
 b { font-size: 13px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.section-title { font-size: 15px; margin: 28px 0 0; }
+.section-title + .stack { margin-top: 12px; }
+.top b { font-size: 14px; }
+.notice { color: var(--teal); font-size: 13px; margin: 12px 0 0; }

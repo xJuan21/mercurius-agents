@@ -11,10 +11,17 @@ XData Definition [ MimeType = application/xml ]
   <Tool Name="FlagConflict" Method="FlagConflict"/>
   <Tool Name="GetAgentMemory" Method="GetAgentMemory"/>
   <Tool Name="SaveAgentMemory" Method="SaveAgentMemory"/>
+  <Tool Name="ProposeNotification" Method="ProposeNotification"/>
+  <Tool Name="CheckSyntax" Method="CheckSyntax"/>
+  <Tool Name="DescribeSchema" Method="DescribeSchema"/>
+  <Tool Name="CheckSQL" Method="CheckSQL"/>
+  <Tool Name="ProposeKnowledgeUpdate" Method="ProposeKnowledgeUpdate"/>
 </ToolSet>
 }
 
 Property AgentName As %String(MAXLEN = 100);
+
+Property ExecutionId As %String(MAXLEN = 50);
 
 /// Searches your private knowledge. Returns matching nodes with their ids.
 Method SearchKnowledge(pQuery As %String(DESCRIPTION = "Words to search for")) As %String
@@ -54,6 +61,39 @@ Method SaveAgentMemory(pContent As %String(DESCRIPTION = "What to remember")) As
 {
     Set SC = ##class(Mercurius.Runtime.KnowledgeService).SaveMemory(..AgentName, pContent)
     Return $SELECT($$$ISOK(SC):"Memory saved", 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+/// Proposes a message for a person. Nothing is sent until someone approves it.
+Method ProposeNotification(pMessage As %String(DESCRIPTION = "Short message for the person, under 500 characters")) As %String
+{
+    Set Payload = {"message":($EXTRACT(pMessage, 1, 500))}
+    Set SC = ##class(Mercurius.Runtime.ActionService).Propose(..AgentName, ..ExecutionId, "Notify", Payload, $EXTRACT(pMessage, 1, 200), .ProposalId)
+    Return $SELECT($$$ISOK(SC):"Notification proposed for approval", 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+/// Proposes new content for one of your notes. Nothing changes until someone approves it.
+Method ProposeKnowledgeUpdate(pNodeId As %Integer(DESCRIPTION = "Id of the note to update"), pNewContent As %String(DESCRIPTION = "The full new content of that note"), pReason As %String(DESCRIPTION = "Why it should change")) As %String
+{
+    Set SC = ##class(Mercurius.Runtime.ActionService).ProposeKnowledgeUpdate(..AgentName, ..ExecutionId, pNodeId, pNewContent, pReason)
+    Return $SELECT($$$ISOK(SC):"Update proposed for approval", 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+/// Compiles ObjectScript lines without running them and reports any syntax error.
+Method CheckSyntax(pCode As %String(DESCRIPTION = "ObjectScript lines to check")) As %String
+{
+    Return ##class(Mercurius.Runtime.CodeCheck).Syntax(pCode)
+}
+
+/// Lists the tables and columns of a schema you may query.
+Method DescribeSchema(pSchema As %String(DESCRIPTION = "Schema name, such as Mercurius_Model")) As %String
+{
+    Return ##class(Mercurius.Runtime.CodeCheck).Describe(pSchema)
+}
+
+/// Checks one SELECT statement without running it.
+Method CheckSQL(pQuery As %String(DESCRIPTION = "One SELECT statement")) As %String
+{
+    Return ##class(Mercurius.Runtime.CodeCheck).SQL(pQuery)
 }
 
 }

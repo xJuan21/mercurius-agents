@@ -4,6 +4,9 @@
       <span class="badge bad">Failed</span>
     } @else {
       <strong>{{ execution().Decision || 'No valid decision' }}</strong>
+      @if (byRules()) {
+        <span class="badge rules" title="The AI was unavailable, so the agent's fallback rules decided">Rules, not AI</span>
+      }
       <span class="badge" [class.review]="needsReview()" [class.ok]="!needsReview()">
         {{ needsReview() ? 'Needs review' : 'Accepted' }}
       </span>
@@ -14,6 +17,13 @@
     <p>{{ execution().ErrorDetails }}</p>
   } @else {
     <p>{{ reason() }}</p>
+    @if (output()) {
+      <pre class="output">{{ output() }}</pre>
+    }
+  }
+
+  @for (action of actions(); track action) {
+    <p class="action">Proposed action · {{ action }}</p>
   }
 
   <ol class="path" aria-label="Production path">
@@ -28,6 +38,9 @@
       <span>Used: {{ tools().join(' · ') }}</span>
     } @else {
       <span>No tools used</span>
+    }
+    @if (usage()) {
+      <span>{{ usage() }}</span>
     }
     <a [href]="trace()" target="_blank" rel="noopener">Message trace {{ execution().InteropSessionId }} ↗</a>
   </footer>

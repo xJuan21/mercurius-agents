@@ -3,10 +3,11 @@ Class Mercurius.Runtime.AgentExecutor Extends %RegisteredObject
 {
 
 /// Loads the named agent, sends it the input and returns the reply text.
-ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %String, pExecutionId As %String = "") As %Status
+ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %String, pExecutionId As %String = "", Output pUsage As %DynamicObject) As %Status
 {
     Set SC = $$$OK
     Set pReply = ""
+    Set pUsage = {}
     Try {
         Set Definition = ##class(Mercurius.Model.AgentDefinition).NameIndexOpen(pAgentName, , .SC)
         $$$ThrowOnError(SC)
@@ -33,6 +34,7 @@ ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %
         Set Session = Agent.CreateSession({"max_iterations":8})
         Set Response = Agent.Chat(Session, pInput)
         Set pReply = Response.Content
+        Set:($ISOBJECT(Response.Usage)) pUsage = Response.Usage
     } Catch Ex {
         Set SC = Ex.AsStatus()
     }
@@ -43,7 +45,7 @@ ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %
 ClassMethod DecisionContract(pDefinition As Mercurius.Model.AgentDefinition) As %String
 {
     Set Values = $TRANSLATE(pDefinition.AllowedDecisions, ",", "|")
-    Return "Finish by replying only with JSON: {"""_pDefinition.DecisionField_""":"""_Values_""",""reason"":""one sentence""}"
+    Return "Finish by replying only with JSON: {"""_pDefinition.DecisionField_""":"""_Values_""",""reason"":""one sentence"",""output"":""only when you produce code, SQL or text that was asked for""}"
 }
 
 /// Binds the tools and policies to this agent. The LLM never supplies the agent's identity.
@@ -51,6 +53,7 @@ ClassMethod AttachTools(pAgent As %AI.Agent, pAgentName As %String, pExecutionId
 {
     Set Tools = ##class(Mercurius.Tools.Knowledge).%New()
     Set Tools.AgentName = pAgentName
+    Set Tools.ExecutionId = pExecutionId
     Set SC = pAgent.ToolManager.AddTool(Tools)
     Return:($$$ISERR(SC)) SC
 

@@ -14,6 +14,19 @@ Property Decision As %String(MAXLEN = 100);
 
 Property Route As %String(MAXLEN = 20, VALUELIST = ",Accepted,Review");
 
+/// AI for a model decision, Rules when the fallback decided.
+Property Engine As %String(MAXLEN = 10, VALUELIST = ",AI,Rules");
+
+Property ModelName As %String(MAXLEN = 100);
+
+/// Tokens reported by AI Hub for the final model call of the run.
+Property PromptTokens As %Integer;
+
+Property CompletionTokens As %Integer;
+
+/// Estimated from list prices; a lower bound, because tool loops make more calls.
+Property CostUSD As %Numeric(SCALE = 6);
+
 Property StartedAt As %TimeStamp;
 
 Property CompletedAt As %TimeStamp;

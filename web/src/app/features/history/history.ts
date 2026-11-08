@@ -22,6 +22,7 @@ export class History implements OnInit {
   protected readonly filter = signal('');
   protected readonly executions = signal<Execution[]>([]);
   protected readonly summary = signal<Summary | null>(null);
+  protected readonly dollars = (value: string | number) => `$${(Number(value) || 0).toFixed(4)}`;
   protected readonly visible = computed(() => {
     const agent = this.filter();
     return agent ? this.executions().filter((run) => run.AgentName === agent) : this.executions();

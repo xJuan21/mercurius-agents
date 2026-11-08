@@ -28,6 +28,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         @case ('shield') {
           <path d="m12 3 8 3v6c0 4-8 9-8 9s-8-5-8-9V6ZM8 12l3 3 5-6" />
         }
+        @case ('inbox') {
+          <path d="M4 13h4l2 3h4l2-3h4M4 13l2-8h12l2 8v6H4Z" />
+        }
         @case ('review') {
           <path d="M12 3 2 20h20L12 3ZM12 10v4M12 17h.01" />
         }

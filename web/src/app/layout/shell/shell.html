@@ -12,8 +12,8 @@
             @if (page.path === '/agents') {
               <span class="count">{{ store.agents().length }}</span>
             }
-            @if (page.path === '/review' && store.openConflicts()) {
-              <span class="count alert">{{ store.openConflicts() }}</span>
+            @if (page.path === '/review' && reviewCount()) {
+              <span class="count alert">{{ reviewCount() }}</span>
             }
           </a>
         }
@@ -85,6 +85,10 @@
         } @empty {
           <p>No tools granted.</p>
         }
+      </section>
+      <section>
+        <h3>When the AI is unavailable</h3>
+        <p>{{ ruleCount() ? ruleCount() + ' fallback rules decide, and a person reviews.' : 'No fallback rules: a person decides.' }}</p>
       </section>
       <section>
         <h3>Model</h3>

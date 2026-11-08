@@ -130,7 +130,13 @@ On an IRIS AI Hub instance, build `2027.1.0AI.109.0`:
 zpm "install mercurius-agents"
 ```
 
-This installs the backend: agents, production, API and sign-in. The web UI is built by Docker,
+Then start the production, or restart IRIS:
+
+```objectscript
+Do ##class(Ens.Director).StartProduction("Mercurius.Interop.Production")
+```
+
+This installs the backend in the current namespace: agents, production, API and sign-in. The web UI is built by Docker,
 so use the Docker install above for the full app. IRIS needs `OPENAI_API_KEY` in its
 environment.
 

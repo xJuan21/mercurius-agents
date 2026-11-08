@@ -9,12 +9,9 @@ ClassMethod Install() As %Status
     Return:($$$ISERR(SC)) SC
     Set SC = ..CreateWebApps()
     Return:($$$ISERR(SC)) SC
-    Set SC = ##class(Ens.Director).SetAutoStart("Mercurius.Interop.Production")
-    Return:($$$ISERR(SC)) SC
-    // An IPM install doesn't restart IRIS, so start the production now unless it runs (state 1).
-    Set SC = ##class(Ens.Director).GetProductionStatus(.Running, .State)
-    Return:($$$ISOK(SC) && (State = 1)) $$$OK
-    Return ##class(Ens.Director).StartProduction("Mercurius.Interop.Production")
+    // IPM holds the Interoperability lock while installing, so the production can't start
+    // here. It starts with IRIS, or with Ens.Director.StartProduction after an IPM install.
+    Return ##class(Ens.Director).SetAutoStart("Mercurius.Interop.Production")
 }
 
 /// Creates /mercurius for the web files, which hold no data, and /mercurius/api for the token-protected API.

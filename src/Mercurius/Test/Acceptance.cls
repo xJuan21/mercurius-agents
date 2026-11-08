@@ -18,7 +18,7 @@ ClassMethod Run() As %Boolean
     Set Own = $CLASSMETHOD(Service, "GetMemories", "Documenter").%ToJSON()
     Set Passed = ..Check("Test 4: memory stays with its agent", (Own [ "acceptance-memory-marker") && '(Other [ "acceptance-memory-marker")) && Passed
 
-    Set Search = $CLASSMETHOD(Service, "Search", "Sentinel", "tailscale funnel webhook").%ToJSON()
+    Set Search = $CLASSMETHOD(Service, "Search", "Sentinel", "partner orders sftp").%ToJSON()
     Set Passed = ..Check("Test 4b: search stays with its agent", Search = "[]") && Passed
 
     Do $CLASSMETHOD(Service, "SaveNode", "Documenter", "Documenter node", "x", "Note", .DocumenterId)
@@ -41,7 +41,7 @@ ClassMethod Run() As %Boolean
 
     Set Definition = ##class(Mercurius.Model.AgentDefinition).%New()
     Set Definition.FallbackRules = "instead of => conflict"_$CHAR(10)_"also => related"
-    Set Decision = ##class(Mercurius.Runtime.RulesEngine).Evaluate(Definition, "We use Cloudflare INSTEAD OF Funnel", .Rule)
+    Set Decision = ##class(Mercurius.Runtime.RulesEngine).Evaluate(Definition, "Partners use the API INSTEAD OF SFTP", .Rule)
     Set None = ##class(Mercurius.Runtime.RulesEngine).Evaluate(Definition, "Lunch on Friday", .Rule)
     Set Passed = ..Check("Fallback rules decide when they match, and only then", (Decision = "conflict") && (None = "")) && Passed
     Set Problem = ##class(Mercurius.Runtime.RulesEngine).Validate("anything => approve", "related,conflict,none")

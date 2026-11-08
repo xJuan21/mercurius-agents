@@ -8,8 +8,8 @@ and acts only with a person's approval.
 
 ## The problem
 
-An integration team's knowledge drifts. A runbook still says the webhook uses Tailscale
-Funnel weeks after the team moved to Cloudflare Tunnel. Alerts arrive faster than anyone
+An integration team's knowledge drifts. A runbook still says partner orders arrive by SFTP
+weeks after the team moved partners to a REST API. Alerts arrive faster than anyone
 can rate them. Code reviews wait, and nobody knows what the AI tools cost.
 
 ## A day with Mercurius
@@ -69,11 +69,11 @@ An invalid or failed reply never gets accepted: it goes to review.
 ## Measured results
 
 `Mercurius.Test.Eval` sends 55 labelled inputs through the production, with fresh sample
-knowledge for each. One run per agent on build 109, 2026-11-07:
+knowledge for each. One run per agent on build 109, 2026-11-07 and 2026-11-08:
 
 | Agent | Model | Correct | Search found the right note | Estimated cost, whole set |
 |---|---|---|---|---|
-| Documenter | gpt-4.1-mini | 15 of 15 | 10 of 10 | $0.005 |
+| Documenter | gpt-4.1-mini | 13 of 15 | 10 of 10 | $0.005 |
 | Sentinel | gpt-4.1-mini | 14 of 15 | n/a | $0.002 |
 | Forge | gpt-4.1 | 14 of 15 | n/a | $0.021 |
 | Query | gpt-4.1-mini | 8 of 10 | n/a | $0.005 |
@@ -82,6 +82,7 @@ knowledge for each. One run per agent on build 109, 2026-11-07:
 - Query got every answerable question right: all five generated queries were also checked by hand. Its misses were a guess on a vague question, and "clarify" instead of "refused" for another schema.
 - The inputs were written by the author, and model output varies between runs. Treat these as a smoke test, not a benchmark.
 - Costs come from list prices and count only the final model call of each run, so they're lower bounds.
+- Documenter scored 15 of 15 with earlier example notes, and 13 of 15 with the current ones: it read a weekly-only backup as related, not a conflict, and a restore test as unrelated.
 - Basic text search found the right note every time, so vector search isn't needed at this size.
 
 Run it yourself:

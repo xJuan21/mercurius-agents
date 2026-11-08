@@ -9,11 +9,11 @@ import { Icon } from '../../shared/icon/icon';
 
 const SUGGESTIONS: Record<string, string[]> = {
   Documenter: [
-    'Decision: the WhatsApp webhook now uses Cloudflare Tunnel instead of Tailscale Funnel.',
+    'Decision: partners now send orders through the REST API instead of SFTP.',
     'IRIS backup update: a weekly offsite copy now runs, in addition to the nightly backup.',
     'Team lunch on Friday: sandwiches and fruit.',
   ],
-  Sentinel: ['iris-dev disk is 97 percent full and journal writes are failing.', 'Nightly backup finished in 12 minutes.'],
+  Sentinel: ['The production server disk is 97 percent full and journal writes are failing.', 'Nightly backup finished in 12 minutes.'],
   Forge: ['Please review this line: set x=$get(^Config("key")) w x', 'Set Total = Total + 1'],
   Query: ['How many runs went to review?', "Show each agent's total estimated cost.", 'Which agents can propose notifications?'],
 };

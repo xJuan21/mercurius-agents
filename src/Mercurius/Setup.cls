@@ -145,15 +145,15 @@ ClassMethod ResetKnowledge() As %Status
     Do ##class(Mercurius.Model.ActionProposal).%KillExtent()
     Do ##class(Mercurius.Model.Notification).%KillExtent()
     Set Service = "Mercurius.Runtime.KnowledgeService"
-    Set SC = $CLASSMETHOD(Service, "SaveNode", "Documenter", "WhatsApp webhook runbook", "The WhatsApp webhook is exposed publicly through Tailscale Funnel.", "Document", .NodeId)
+    Set SC = $CLASSMETHOD(Service, "SaveNode", "Documenter", "Partner orders runbook", "Partner orders arrive by SFTP every hour and are picked up by the file service.", "Document", .NodeId)
     Return:($$$ISERR(SC)) SC
-    Set SC = $CLASSMETHOD(Service, "SaveNode", "Documenter", "IRIS backup policy", "Journals and databases on iris01 are backed up nightly.", "Document", .NodeId)
+    Set SC = $CLASSMETHOD(Service, "SaveNode", "Documenter", "IRIS backup policy", "Journals and databases on the production server are backed up nightly.", "Document", .NodeId)
     Return:($$$ISERR(SC)) SC
     Set SC = $CLASSMETHOD(Service, "SaveNode", "Documenter", "TLS certificate renewal", "TLS certificates on the web gateway are renewed manually every 90 days.", "Document", .NodeId)
     Return:($$$ISERR(SC)) SC
     Set SC = $CLASSMETHOD(Service, "SaveNode", "Documenter", "Restarting the production", "Restart the Mercurius production from the Management Portal. Never kill IRIS processes directly.", "Document", .NodeId)
     Return:($$$ISERR(SC)) SC
-    Set SC = $CLASSMETHOD(Service, "SaveNode", "Sentinel", "Known issue: disk alerts", "Disk alerts on iris-dev usually mean journal growth.", "Issue", .NodeId)
+    Set SC = $CLASSMETHOD(Service, "SaveNode", "Sentinel", "Known issue: disk alerts", "Disk alerts on the production server usually mean journal growth.", "Issue", .NodeId)
     Return:($$$ISERR(SC)) SC
     Set SC = $CLASSMETHOD(Service, "SaveNode", "Forge", "ObjectScript style", "Commands are full words in UpperCamelCase: Set, Do, Write, Quit, Return, Kill. Never lowercase and never abbreviated, so set, s, w, d and q are wrong. Variables use UpperCamelCase, so Total is right and total or x are wrong. A postconditional is always in parentheses: Set:(Count > 0) is right and Set:Count>0 is wrong. These lines follow every rule: Set Count = 0; Do ..Save(Record); Write Count, !; Quit:(Done = 1) Result.", "Concept", .NodeId)
     Return:($$$ISERR(SC)) SC

@@ -9,14 +9,22 @@ ClassMethod Install() As %Status
     Return:($$$ISERR(SC)) SC
     Set SC = ..CreateWebApps()
     Return:($$$ISERR(SC)) SC
+    // IPM holds the Interoperability lock while installing, so the production can't start
+    // here. It starts with IRIS, or with Ens.Director.StartProduction after an IPM install.
     Return ##class(Ens.Director).SetAutoStart("Mercurius.Interop.Production")
 }
 
 /// Creates /mercurius for the web files, which hold no data, and /mercurius/api for the token-protected API.
 ClassMethod CreateWebApps() As %Status
 {
+    Set Namespace = $NAMESPACE
     New $NAMESPACE
     Set $NAMESPACE = "%SYS"
+    // The roles need the resources of whichever namespace the package is installed into.
+    Set SC = ..DatabaseResource(Namespace, "Routines", .CodeResource)
+    Return:($$$ISERR(SC)) SC
+    Set SC = ..DatabaseResource(Namespace, "Globals", .DataResource)
+    Return:($$$ISERR(SC)) SC
     Set Resource = "MercuriusAccess"
     Set Role = "MercuriusUser"
     Set WebRole = "MercuriusWeb"
@@ -25,17 +33,17 @@ ClassMethod CreateWebApps() As %Status
         Return:($$$ISERR(SC)) SC
     }
     If ('##class(Security.Roles).Exists(Role)) {
-        Set SC = ##class(Security.Roles).Create(Role, "Use Mercurius Agents", Resource_":U,%DB_IRISAPP_DATA:RW,%DB_IRISAPP_CODE:R")
+        Set SC = ##class(Security.Roles).Create(Role, "Use Mercurius Agents", Resource_":U,"_DataResource_":RW"_$SELECT(CodeResource '= DataResource:","_CodeResource_":R", 1:""))
         Return:($$$ISERR(SC)) SC
     }
 
     If ('##class(Security.Roles).Exists(WebRole)) {
-        Set SC = ##class(Security.Roles).Create(WebRole, "Serve the Mercurius web files", "%DB_IRISAPP_CODE:R,%DB_IRISAPP_DATA:R")
+        Set SC = ##class(Security.Roles).Create(WebRole, "Serve the Mercurius web files", DataResource_":R"_$SELECT(CodeResource '= DataResource:","_CodeResource_":R", 1:""))
         Return:($$$ISERR(SC)) SC
     }
 
     Do:(##class(Security.Applications).Exists("/mercurius")) ##class(Security.Applications).Delete("/mercurius")
-    Set Properties("NameSpace") = "IRISAPP"
+    Set Properties("NameSpace") = Namespace
     Set Properties("DispatchClass") = "Mercurius.API.Web"
     Set Properties("AutheEnabled") = 64
     Set Properties("MatchRoles") = ":"_WebRole
@@ -45,7 +53,7 @@ ClassMethod CreateWebApps() As %Status
 
     Do:(##class(Security.Applications).Exists("/mercurius/api")) ##class(Security.Applications).Delete("/mercurius/api")
     Kill Properties
-    Set Properties("NameSpace") = "IRISAPP"
+    Set Properties("NameSpace") = Namespace
     Set Properties("DispatchClass") = "Mercurius.API.REST"
     Set Properties("AutheEnabled") = 32
     Set Properties("Resource") = Resource
@@ -55,6 +63,20 @@ ClassMethod CreateWebApps() As %Status
     Set Properties("JWTAccessTokenTimeout") = 900
     Set Properties("JWTRefreshTokenTimeout") = 28800
     Return ##class(Security.Applications).Create("/mercurius/api", .Properties)
+}
+
+/// Returns the resource that protects the namespace's code or data database. Run in %SYS.
+ClassMethod DatabaseResource(pNamespace As %String, pKind As %String, Output pResource As %String) As %Status
+{
+    Set pResource = ""
+    Set SC = ##class(Config.Namespaces).Get(pNamespace, .Namespace)
+    Return:($$$ISERR(SC)) SC
+    Set SC = ##class(Config.Databases).Get(Namespace(pKind), .Database)
+    Return:($$$ISERR(SC)) SC
+    Set Handle = ##class(SYS.Database).%OpenId(Database("Directory"), , .SC)
+    Return:($$$ISERR(SC)) SC
+    Set pResource = Handle.ResourceName
+    Return $$$OK
 }
 
 ClassMethod SeedAgents() As %Status

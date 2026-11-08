@@ -71,7 +71,7 @@ ClassMethod SeedAgents() As %Status
     Set SC = ..SaveAgent("Sentinel", "Monitoring and diagnostics", "I help you understand operational alerts, assess their severity and identify what needs your attention.", Prompt, "Direct and concise", "low,medium,high", "high", "Event", "shield", ..Lines("failing => high", "failed => high", "down => high", "full => high", "expires => medium", "percent => medium", "finished => low", "completed => low", "succeeded => low"), "severity")
     Return:($$$ISERR(SC)) SC
 
-    Set Prompt = "You review ObjectScript against the team's coding standards. Use SearchKnowledge for the standards first. ready: no standard is broken and nothing is unsafe; short or simple code is fine. changes: it breaks a specific standard, such as a lowercase or abbreviated command, a lowercase variable, or a postconditional without parentheses. blocked: it deletes or exposes data, runs arbitrary input or operating system commands, or stores a password or secret in plain text; this outranks changes. Name the specific problem in your reason."
+    Set Prompt = "You review ObjectScript against the team's coding standards. Use CheckSyntax on the code first: a syntax error always means changes, unless the code is unsafe. Then use SearchKnowledge for the standards and the review checklist. ready: no standard is broken and nothing is unsafe; short or simple code is fine. changes: it breaks a specific standard, such as a lowercase or abbreviated command, a lowercase variable, or a postconditional without parentheses. blocked: it deletes or exposes data, runs arbitrary input or operating system commands, or stores a password or secret in plain text; this outranks changes. Name the specific problem in your reason."
     Set SC = ..SaveAgent("Forge", "Builder and code assistant", "I help you explore implementation ideas, review code and turn a technical plan into clear next steps.", Prompt, "Precise and technical", "ready,changes,blocked", "changes,blocked", "Event", "agents", ..Lines("kill ^ => blocked", "xecute => blocked", "$zf( => blocked", "set x= => changes", "$get( => changes"))
     Return:($$$ISERR(SC)) SC
     // Smaller models misjudged valid code in the measured runs, so Forge uses gpt-4.1.
@@ -84,6 +84,17 @@ ClassMethod SeedAgents() As %Status
         Set SC = ..Grant("Documenter", Tool)
         Return:($$$ISERR(SC)) SC
     }
+    Set SC = ..Grant("Forge", "CheckSyntax")
+    Return:($$$ISERR(SC)) SC
+
+    Set Prompt = "You turn questions about the Mercurius data into one InterSystems IRIS SQL SELECT. Use SearchKnowledge for the data guide and DescribeSchema with Mercurius_Model first. Use the exact values the data guide lists; they are case-sensitive. Write the query, then use CheckSQL and fix it until it's valid. Never write statements that change data. ready: CheckSQL says the query is valid; put the SQL in output. clarify: the question is vague, or asks for something the data doesn't hold, such as revenue or sales; never guess a meaning; say what's missing. refused: it asks to change or delete data, or to read data outside that schema."
+    Set SC = ..SaveAgent("Query", "SQL generator", "I turn your questions into SQL for the Mercurius data, and I check every query before you see it. I never run or change anything.", Prompt, "Precise and technical", "ready,clarify,refused", "clarify,refused", "Event", "graph", ..Lines("delete => refused", "update => refused", "drop => refused", "insert => refused"))
+    Return:($$$ISERR(SC)) SC
+    For Tool = "SearchKnowledge", "DescribeSchema", "CheckSQL" {
+        Set SC = ..Grant("Query", Tool)
+        Return:($$$ISERR(SC)) SC
+    }
+
     For Agent = "Sentinel", "Forge" {
         Set SC = ..Grant(Agent, "SearchKnowledge")
         Return:($$$ISERR(SC)) SC
@@ -149,6 +160,12 @@ ClassMethod ResetKnowledge() As %Status
     Set SC = $CLASSMETHOD(Service, "SaveMemory", "Documenter", "The team prefers concise notes with explicit next steps.", "Preference")
     Return:($$$ISERR(SC)) SC
     Set SC = $CLASSMETHOD(Service, "SaveMemory", "Sentinel", "Page a person for journal failures, even outside working hours.", "Preference")
+    Return:($$$ISERR(SC)) SC
+    Set SC = $CLASSMETHOD(Service, "SaveNode", "Forge", "ObjectScript review checklist", "From the objectscript-review skill in iris-agentic-dev (InterSystems, MIT License). No Quit with a value inside Try/Catch or loops. Intra-class calls use ..Method() syntax. Error handling uses $$$ThrowOnError, $$$ISERR and $$$ISOK. Never throw a %Status directly; use exception objects. Complex arithmetic has explicit parentheses. A method rolls back only its own transaction level. No New on a plain variable inside a procedure block. %TimeStamp values use YYYY-MM-DD HH:MM:SS. No temporary data in globals when locals suffice. Never edit Storage blocks by hand.", "Concept", .NodeId)
+    Return:($$$ISERR(SC)) SC
+    Set SC = $CLASSMETHOD(Service, "SaveNode", "Query", "Data guide", "Mercurius data, schema Mercurius_Model. AgentExecution is one agent run: AgentName, Decision, Status ('Completed' or 'Failed'), Route ('Accepted' or 'Review'; sent to review means Route = 'Review'), Engine ('AI' or 'Rules'), ModelName, PromptTokens, CompletionTokens, CostUSD (estimated AI cost of the run, not revenue), StartedAt. KnowledgeConflict is a possible contradiction: AgentName, Status ('Open', 'Reviewed', 'Dismissed' or 'Resolved'), Description, CreatedAt. AgentToolPermission says which agent may use which tool: AgentName, ToolKey, such as 'ProposeNotification'. AgentDefinition is an agent: Name, Role, ModelName, Enabled. ActionProposal is a proposed action: AgentName, ActionType ('Notify' or 'UpdateKnowledge'), Status ('Proposed', 'Rejected', 'Executed', 'Failed' or 'Expired'). The data holds no sales, revenue or customer information.", "Concept", .NodeId)
+    Return:($$$ISERR(SC)) SC
+    Set SC = $CLASSMETHOD(Service, "SaveMemory", "Query", "People mostly ask about runs, decisions, conflicts and costs.", "Preference")
     Return:($$$ISERR(SC)) SC
     Return $CLASSMETHOD(Service, "SaveMemory", "Forge", "Reviews should name the exact rule that was broken.", "Preference")
 }

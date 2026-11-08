@@ -12,6 +12,9 @@ XData Definition [ MimeType = application/xml ]
   <Tool Name="GetAgentMemory" Method="GetAgentMemory"/>
   <Tool Name="SaveAgentMemory" Method="SaveAgentMemory"/>
   <Tool Name="ProposeNotification" Method="ProposeNotification"/>
+  <Tool Name="CheckSyntax" Method="CheckSyntax"/>
+  <Tool Name="DescribeSchema" Method="DescribeSchema"/>
+  <Tool Name="CheckSQL" Method="CheckSQL"/>
   <Tool Name="ProposeKnowledgeUpdate" Method="ProposeKnowledgeUpdate"/>
 </ToolSet>
 }
@@ -73,6 +76,24 @@ Method ProposeKnowledgeUpdate(pNodeId As %Integer(DESCRIPTION = "Id of the note 
 {
     Set SC = ##class(Mercurius.Runtime.ActionService).ProposeKnowledgeUpdate(..AgentName, ..ExecutionId, pNodeId, pNewContent, pReason)
     Return $SELECT($$$ISOK(SC):"Update proposed for approval", 1:$SYSTEM.Status.GetErrorText(SC))
+}
+
+/// Compiles ObjectScript lines without running them and reports any syntax error.
+Method CheckSyntax(pCode As %String(DESCRIPTION = "ObjectScript lines to check")) As %String
+{
+    Return ##class(Mercurius.Runtime.CodeCheck).Syntax(pCode)
+}
+
+/// Lists the tables and columns of a schema you may query.
+Method DescribeSchema(pSchema As %String(DESCRIPTION = "Schema name, such as Mercurius_Model")) As %String
+{
+    Return ##class(Mercurius.Runtime.CodeCheck).Describe(pSchema)
+}
+
+/// Checks one SELECT statement without running it.
+Method CheckSQL(pQuery As %String(DESCRIPTION = "One SELECT statement")) As %String
+{
+    Return ##class(Mercurius.Runtime.CodeCheck).SQL(pQuery)
 }
 
 }

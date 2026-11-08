@@ -1,19 +1,34 @@
 # Mercurius Agents
 
-Configurable AI agents that make decisions inside InterSystems IRIS Interoperability
-productions, built on IRIS AI Hub.
+An AI operations desk for an InterSystems IRIS integration team, built on IRIS AI Hub and
+Interoperability. Your team defines the agents; each one works inside a real production
+and acts only with a person's approval.
+
+![Documenter finds a contradiction and proposes a fix](docs/screenshots/chat-documenter.png)
+
+## The problem
+
+An integration team's knowledge drifts. A runbook still says the webhook uses Tailscale
+Funnel weeks after the team moved to Cloudflare Tunnel. Alerts arrive faster than anyone
+can rate them. Code reviews wait, and nobody knows what the AI tools cost.
+
+## A day with Mercurius
+
+| When | Agent | What happens |
+|---|---|---|
+| A new decision note is filed | **Documenter** | Finds the old runbook it contradicts, flags the conflict and proposes corrected text. A person approves, and the note is fixed through the production |
+| A disk alert arrives | **Sentinel** | Checks known issues, rates it high and proposes a message for the person on call |
+| A developer pastes a line | **Forge** | Compiles it without running it, checks it against the team's standards and names the broken rule |
+| A lead asks "what did the agents cost?" | **Query** | Writes the SQL, validates it without running it, and shows it |
+| A new need appears | **Build an agent** | Anyone with access creates a new agent in the UI, with its own decisions, tools and fallback rules. It runs in the production straight away, with no new class |
 
 Agents are stored records, not generated classes. One runtime runs them all. Each agent has
-its own instructions, permitted tools, private knowledge and memory. Its decision then
-routes a real message through a production.
+its own instructions, model, permitted tools, private knowledge and memory.
 
-## What it does
+**No OpenAI key?** The production still runs: each agent's fallback rules decide, the run is
+labelled **Rules, not AI**, and it goes to review.
 
-A document arrives at a Business Service. The **Documenter** agent searches its private
-knowledge and decides whether the document relates to, or contradicts, what it already
-knows. A contradiction is recorded as an open finding and routed to review. Alerts follow
-the same production and code, but reach the **Sentinel** agent, which has different
-instructions and tools. **Forge** reviews code against the team's standards.
+## How it works
 
 ```text
 File inbox or web UI -> DocumentIngress / AlertIngress / CodeIngress / ChatIngress (BS)
@@ -41,20 +56,30 @@ An invalid or failed reply never gets accepted: it goes to review.
 | Use tools | Search knowledge, link notes, flag conflicts, read and save memory, each granted per agent |
 | Propose actions | Send a notification, or update a note. Nothing runs until a person approves it in **Review**; approval re-checks the proposal and runs it through the production |
 | Keep working without AI | If there's no key or the provider fails, the agent's fallback rules decide. These runs are labelled **Rules, not AI** and always go to review |
+| Check, not guess | Forge compiles code as a throwaway routine, which never runs it. Query prepares SQL without running it, only SELECT, only the `Mercurius_Model` schema |
 | Show their cost | Each run records the model, tokens and an estimated cost |
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Query writes and validates SQL](docs/screenshots/chat-query.png) | ![Proposed actions wait for approval](docs/screenshots/review.png) |
+| ![History with tokens and cost](docs/screenshots/history.png) | ![Build an agent](docs/screenshots/builder.png) |
 
 ## Measured results
 
-`Mercurius.Test.Eval` sends 45 labelled inputs through the production, 15 per agent, with fresh
-sample knowledge for each. One run on build 109, 2026-11-07:
+`Mercurius.Test.Eval` sends 55 labelled inputs through the production, with fresh sample
+knowledge for each. One run per agent on build 109, 2026-11-07:
 
 | Agent | Model | Correct | Search found the right note | Estimated cost, whole set |
 |---|---|---|---|---|
 | Documenter | gpt-4.1-mini | 15 of 15 | 10 of 10 | $0.005 |
 | Sentinel | gpt-4.1-mini | 14 of 15 | n/a | $0.002 |
-| Forge | gpt-4.1 | 12 of 15 | n/a | $0.013 |
+| Forge | gpt-4.1 | 14 of 15 | n/a | $0.021 |
+| Query | gpt-4.1-mini | 8 of 10 | n/a | $0.005 |
 
-- Forge flags some valid code as needing changes. `gpt-4.1-mini` scored 9 to 11 of 15, so Forge uses `gpt-4.1`.
+- Forge went from 12 to 14 of 15 once it could compile code with `CheckSyntax`. On `gpt-4.1-mini` it scored 9 to 11, so it uses `gpt-4.1`.
+- Query got every answerable question right: all five generated queries were also checked by hand. Its misses were a guess on a vague question, and "clarify" instead of "refused" for another schema.
 - The inputs were written by the author, and model output varies between runs. Treat these as a smoke test, not a benchmark.
 - Costs come from list prices and count only the final model call of each run, so they're lower bounds.
 - Basic text search found the right note every time, so vector search isn't needed at this size.
@@ -116,7 +141,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:52775/mercurius/   # 2
 Backend checks, no LLM needed:
 
 ```bash
-echo 'Do ##class(Mercurius.Test.Acceptance).Run() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
+echo 'zpm "mercurius-agents test -only" Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
 ```
 
 This writes test records, and `demo/run.sh` resets them.
@@ -167,6 +192,12 @@ The UI is an Angular app in `web/`, built in a separate Docker stage. IRIS serve
 Sign-in uses the JWT support built into IRIS REST web applications. IRIS checks the password
 and provides `/login`, `/refresh` and `/logout`. The access token stays in memory, and the
 refresh token stays in `sessionStorage`, so it ends with the browser tab.
+
+## Credits
+
+Forge's review checklist comes from the `objectscript-review` skill in
+[iris-agentic-dev](https://github.com/intersystems-community/iris-agentic-dev) (InterSystems,
+MIT License). Built on the [ai-hub-dev-template](https://github.com/intersystems-community/ai-hub-dev-template).
 
 ## Why not `EnsLib.AI.Agent.PassthroughOperation`?
 

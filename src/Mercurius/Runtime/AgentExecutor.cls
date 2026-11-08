@@ -45,7 +45,7 @@ ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %
 ClassMethod DecisionContract(pDefinition As Mercurius.Model.AgentDefinition) As %String
 {
     Set Values = $TRANSLATE(pDefinition.AllowedDecisions, ",", "|")
-    Return "Finish by replying only with JSON: {"""_pDefinition.DecisionField_""":"""_Values_""",""reason"":""one sentence""}"
+    Return "Finish by replying only with JSON: {"""_pDefinition.DecisionField_""":"""_Values_""",""reason"":""one sentence"",""output"":""only when you produce code, SQL or text that was asked for""}"
 }
 
 /// Binds the tools and policies to this agent. The LLM never supplies the agent's identity.

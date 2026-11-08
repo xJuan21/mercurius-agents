@@ -17,6 +17,9 @@
     <p>{{ execution().ErrorDetails }}</p>
   } @else {
     <p>{{ reason() }}</p>
+    @if (output()) {
+      <pre class="output">{{ output() }}</pre>
+    }
   }
 
   @for (action of actions(); track action) {

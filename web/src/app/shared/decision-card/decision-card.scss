@@ -11,3 +11,4 @@ footer { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-b
 .badge.rules { margin-left: auto; background: #eef0f4; color: var(--body); }
 .badge.rules + .badge { margin-left: 0; }
 .action { margin: 0 0 10px; font-size: 13px; color: var(--purple-ink); }
+.output { background: #f6f7f9; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin: 0 0 10px; font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }

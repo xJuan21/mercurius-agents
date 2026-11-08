@@ -3,6 +3,24 @@ import { Execution } from '../api/api.models';
 export const splitList = (value: string | null | undefined): string[] =>
   (value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
+/** Reads the agent's JSON reply. Returns null when the reply isn't JSON. */
+function parseReply(execution: Execution): Record<string, string> | null {
+  const reply = execution.OutputSummary ?? '';
+  const start = reply.indexOf('{');
+  const end = reply.lastIndexOf('}');
+  if (start < 0 || end <= start) {
+    return null;
+  }
+  try {
+    return JSON.parse(reply.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+/** Code, SQL or text the agent produced, if any. */
+export const decisionOutput = (execution: Execution): string => parseReply(execution)?.['output'] ?? '';
+
 /** Reads the reason from the agent's JSON reply, or shows the raw reply. */
 export function decisionReason(execution: Execution): string {
   const reply = execution.OutputSummary ?? '';

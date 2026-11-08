@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Execution } from '../../core/api/api.models';
 import { AgentStore } from '../../core/state/agent.store';
-import { ACTION_LABELS, decisionReason, formatCost, splitList, traceUrl } from '../../core/state/format';
+import { ACTION_LABELS, decisionOutput, decisionReason, formatCost, splitList, traceUrl } from '../../core/state/format';
 
 @Component({
   selector: 'app-decision-card',
@@ -17,6 +17,7 @@ export class DecisionCard {
   protected readonly failed = computed(() => this.execution().Status === 'Failed');
   protected readonly needsReview = computed(() => this.execution().Route === 'Review');
   protected readonly reason = computed(() => decisionReason(this.execution()));
+  protected readonly output = computed(() => decisionOutput(this.execution()));
   protected readonly tools = computed(() => {
     const unique = new Set(splitList(this.execution().Tools));
     return [...unique].map((key) => this.store.toolLabel(key));

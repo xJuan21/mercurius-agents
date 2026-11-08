@@ -15,6 +15,7 @@ const SUGGESTIONS: Record<string, string[]> = {
   ],
   Sentinel: ['iris-dev disk is 97 percent full and journal writes are failing.', 'Nightly backup finished in 12 minutes.'],
   Forge: ['Please review this line: set x=$get(^Config("key")) w x', 'Set Total = Total + 1'],
+  Query: ['How many runs went to review?', "Show each agent's total estimated cost.", 'Which agents can propose notifications?'],
 };
 
 @Component({

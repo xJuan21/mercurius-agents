@@ -17,6 +17,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
   <Route Url="/agents/:name" Method="PUT" Call="UpdateAgent"/>
   <Route Url="/agents/:name/messages" Method="POST" Call="SendMessage"/>
   <Route Url="/tools" Method="GET" Call="ListTools"/>
+  <Route Url="/models" Method="GET" Call="ListModels"/>
   <Route Url="/summary" Method="GET" Call="GetSummary"/>
   <Route Url="/executions" Method="GET" Call="ListExecutions"/>
   <Route Url="/conflicts" Method="GET" Call="ListConflicts"/>
@@ -97,6 +98,13 @@ ClassMethod SendMessage(pName As %String) As %Status
 ClassMethod ListTools() As %Status
 {
     Write ##class(Mercurius.Runtime.ToolRegistry).List().%ToJSON()
+    Return $$$OK
+}
+
+/// Models per configured provider. ?refresh=1 asks the providers again.
+ClassMethod ListModels() As %Status
+{
+    Write ##class(Mercurius.Runtime.ModelCatalog).Catalog(%request.Get("refresh") = 1).%ToJSON()
     Return $$$OK
 }
 

@@ -55,6 +55,9 @@ ClassMethod Run() As %Boolean
     Set Second = ##class(Mercurius.Runtime.ActionService).Decide(ProposalId, "Rejected", "tester")
     Set Passed = ..Check("A decided proposal can't be decided again", (First = "") && (Second '= "")) && Passed
 
+    Set Bad = ##class(Mercurius.Runtime.AgentService).Validate({"name":"Atlas","role":"x","instructions":"y","allowedDecisions":"a","provider":"openai","model":"no-such-model"}, 1)
+    Set Passed = ..Check("A model outside the provider's list is rejected", Bad '= "") && Passed
+
     Set Redacted = ##class(Mercurius.Runtime.AgentExecutor).Redact("Incorrect API key provided: sk-proj-abc123DEF456")
     Set Passed = ..Check("API keys are removed from stored errors", '(Redacted [ "abc123DEF456") && (Redacted [ "[REDACTED]")) && Passed
 

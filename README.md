@@ -57,6 +57,7 @@ An invalid or failed reply never gets accepted: it goes to review.
 | Propose actions | Send a notification, or update a note. Nothing runs until a person approves it in **Review**; approval re-checks the proposal and runs it through the production |
 | Keep working without AI | If there's no key or the provider fails, the agent's fallback rules decide. These runs are labelled **Rules, not AI** and always go to review |
 | Check, not guess | Forge compiles code as a throwaway routine, which never runs it. Query prepares SQL without running it, only SELECT, only the `Mercurius_Model` schema |
+| Choose their model | Each agent has its own provider and model, chosen from the provider's live list. Only providers with a key are offered |
 | Show their cost | Each run records the model, tokens and an estimated cost |
 
 ## Screenshots
@@ -98,6 +99,7 @@ echo 'Do ##class(Mercurius.Test.Eval).Run() Halt' | docker compose exec -T iris 
   [EAP portal](https://evaluation.intersystems.com/Eval/early-access/AIHub).
   It can't be pulled from a registry, and this repo never publishes it.
 - An **OpenAI** API key. Variable: `OPENAI_API_KEY`. The default model is `gpt-4.1-mini`.
+- Optional: an **Anthropic** API key, `ANTHROPIC_API_KEY`. Each agent can then use a Claude model, chosen in the agent form.
 
 ## Install
 
@@ -195,6 +197,8 @@ and provides `/login`, `/refresh` and `/logout`. The access token stays in memor
 refresh token stays in `sessionStorage`, so it ends with the browser tab.
 
 ## Credits
+
+Copyright (c) 2026 Juan Mota Sanchez. Released under the [MIT License](LICENSE).
 
 Forge's review checklist comes from the `objectscript-review` skill in
 [iris-agentic-dev](https://github.com/intersystems-community/iris-agentic-dev) (InterSystems,

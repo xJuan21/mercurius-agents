@@ -23,6 +23,12 @@ ClassMethod Validate(pBody As %DynamicObject, pIsNew As %Boolean) As %String
         }
     }
 
+    If ((pBody.provider '= "") || (pBody.model '= "")) {
+        If ('##class(Mercurius.Runtime.ModelCatalog).IsAllowed(pBody.provider, pBody.model)) {
+            Return "That model isn't available for the provider. Refresh the model list and choose again."
+        }
+    }
+
     Set Problem = ##class(Mercurius.Runtime.RulesEngine).Validate(pBody.fallbackRules, Allowed)
     Return:(Problem '= "") Problem
 
@@ -53,6 +59,8 @@ ClassMethod Save(pBody As %DynamicObject, pName As %String = "") As %Status
     Set Definition.AllowedDecisions = ..CleanList(pBody.allowedDecisions)
     Set Definition.ReviewDecisions = ..CleanList(pBody.reviewDecisions)
     Set Definition.FallbackRules = pBody.fallbackRules
+    Set:(pBody.provider '= "") Definition.ProviderName = pBody.provider
+    Set:(pBody.model '= "") Definition.ModelName = pBody.model
     Set:(pBody.%IsDefined("enabled")) Definition.Enabled = +pBody.enabled
     Set SC = Definition.%Save()
     Return:($$$ISERR(SC)) SC

@@ -10,6 +10,7 @@ import {
   Knowledge,
   Memory,
   Notification,
+  ProviderModels,
   Proposal,
   Summary,
   Tool,
@@ -36,6 +37,12 @@ export class ApiService {
   /** Runs the message through the production, so it can take several seconds. */
   sendMessage(agent: string, text: string): Observable<unknown> {
     return this.http.post(`${API_URL}/agents/${encodeURIComponent(agent)}/messages`, { text });
+  }
+
+  /** Chat models per configured provider, cached by IRIS for a day. */
+  models(refresh = false): Observable<ProviderModels[]> {
+    const params = refresh ? new HttpParams().set('refresh', '1') : new HttpParams();
+    return this.http.get<ProviderModels[]>(`${API_URL}/models`, { params });
   }
 
   tools(): Observable<Tool[]> {

@@ -8,3 +8,5 @@ legend { padding: 0; }
 .check small { display: block; color: var(--muted); font-size: 12px; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 textarea.rules { min-height: 70px; font-family: ui-monospace, monospace; font-size: 13px; }
+.model-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.link { border: 0; background: none; color: var(--purple-ink); padding: 0; text-decoration: underline; font-size: 12px; }

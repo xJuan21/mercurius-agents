@@ -27,7 +27,20 @@ export interface AgentInput {
   reviewDecisions: string;
   tools: string[];
   fallbackRules: string;
+  provider: string;
+  model: string;
   enabled: boolean;
+}
+
+export interface ModelOption {
+  id: string;
+  name: string;
+  priced: boolean | number;
+}
+
+export interface ProviderModels {
+  provider: string;
+  models: ModelOption[];
 }
 
 export interface Tool {

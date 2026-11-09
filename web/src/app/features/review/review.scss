@@ -10,3 +10,16 @@ b { font-size: 13px; }
 .section-title + .stack { margin-top: 12px; }
 .top b { font-size: 14px; }
 .notice { color: var(--teal); font-size: 13px; margin: 12px 0 0; }
+.code {
+  background: #091222;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  max-height: 360px;
+  overflow: auto;
+  font:
+    12px/1.6 ui-monospace,
+    monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

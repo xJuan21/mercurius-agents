@@ -52,6 +52,7 @@ export function formatCost(value: string | number | null | undefined): string {
 export const ACTION_LABELS: Record<string, string> = {
   Notify: 'Notification',
   UpdateKnowledge: 'Knowledge update',
+  RunTests: 'Unit tests',
 };
 
 export const PORTAL_URL = '/csp/sys/UtilHome.csp';

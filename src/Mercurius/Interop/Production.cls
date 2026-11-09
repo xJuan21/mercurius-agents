@@ -25,6 +25,7 @@ XData ProductionDefinition
   <Item Name="ChatIngress" ClassName="Mercurius.Interop.BS.ChatIngress" PoolSize="0" Enabled="true"/>
   <Item Name="ActionIngress" ClassName="Mercurius.Interop.BS.ActionIngress" PoolSize="0" Enabled="true"/>
   <Item Name="Notifier" ClassName="Mercurius.Interop.BO.Notifier" PoolSize="1" Enabled="true"/>
+  <Item Name="TestRunner" ClassName="Mercurius.Interop.BO.TestRunner" PoolSize="1" Enabled="true"/>
   <Item Name="KnowledgeUpdater" ClassName="Mercurius.Interop.BO.KnowledgeUpdater" PoolSize="1" Enabled="true"/>
   <Item Name="AgentWorkflow" ClassName="Mercurius.Interop.BP.AgentWorkflow" PoolSize="1" Enabled="true"/>
   <Item Name="AgentRunner" ClassName="Mercurius.Interop.BO.AgentRunner" PoolSize="1" Enabled="true"/>

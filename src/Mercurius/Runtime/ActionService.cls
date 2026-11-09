@@ -29,6 +29,16 @@ ClassMethod ProposeKnowledgeUpdate(pAgentName As %String, pExecutionId As %Strin
     Return ..Propose(pAgentName, pExecutionId, "UpdateKnowledge", Payload, "Update """_Node.Title_""": "_$EXTRACT(pReason, 1, 150), .ProposalId)
 }
 
+/// The code must pass the static checks and compile in a throwaway namespace. Nothing runs until approval.
+ClassMethod ProposeTests(pAgentName As %String, pExecutionId As %String, pClassName As %String, pTestCode As %String, pReason As %String) As %Status
+{
+    Set SC = ##class(Mercurius.Runtime.TestSandbox).Run(pClassName, pTestCode, 0, .Summary)
+    Return:($$$ISERR(SC)) SC
+    Return:(Summary.problem '= "") $$$ERROR($$$GeneralError, Summary.problem)
+    Set Payload = {"className":(pClassName), "code":(pTestCode), "reason":($EXTRACT(pReason, 1, 500))}
+    Return ..Propose(pAgentName, pExecutionId, "RunTests", Payload, "Run tests for "_pClassName_": "_$EXTRACT(pReason, 1, 150), .ProposalId)
+}
+
 /// Returns a problem message, or an empty string when the decision was applied.
 ClassMethod Decide(pId As %String, pStatus As %String, pUser As %String) As %String
 {
@@ -45,7 +55,7 @@ ClassMethod Decide(pId As %String, pStatus As %String, pUser As %String) As %Str
         Return ""
     }
 
-    Set Tool = $SELECT(Proposal.ActionType = "Notify":"ProposeNotification", 1:"ProposeKnowledgeUpdate")
+    Set Tool = $CASE(Proposal.ActionType, "Notify":"ProposeNotification", "RunTests":"ProposeTests", :"ProposeKnowledgeUpdate")
     If ('##class(Mercurius.Model.AgentToolPermission).AgentToolIndexExists(Proposal.AgentName, Tool)) {
         Return "The agent no longer has permission for this action."
     }

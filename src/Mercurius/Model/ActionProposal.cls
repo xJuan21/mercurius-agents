@@ -6,7 +6,7 @@ Property AgentName As %String(MAXLEN = 100) [ Required ];
 
 Property ExecutionId As %String(MAXLEN = 50);
 
-Property ActionType As %String(MAXLEN = 30, VALUELIST = ",Notify,UpdateKnowledge") [ Required ];
+Property ActionType As %String(MAXLEN = 30, VALUELIST = ",Notify,UpdateKnowledge,RunTests") [ Required ];
 
 /// JSON with what the action needs, captured when it was proposed.
 Property Payload As %String(MAXLEN = "");

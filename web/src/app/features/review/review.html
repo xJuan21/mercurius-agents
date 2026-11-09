@@ -28,6 +28,10 @@
 
         @if (proposal.ActionType === 'Notify') {
           <p class="finding">{{ proposal.message }}</p>
+        } @else if (proposal.ActionType === 'RunTests') {
+          <p class="finding">{{ proposal.reason }}</p>
+          <p class="hint">Runs in a throwaway namespace against {{ proposal.className }}. Read the code before you approve it.</p>
+          <pre class="code">{{ proposal.code }}</pre>
         } @else {
           <p class="finding">{{ proposal.reason }}</p>
           <div class="compare">

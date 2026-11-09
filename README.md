@@ -7,6 +7,8 @@ and acts only with a person's approval.
 **Live demo:** https://mercurius.juan-mota.com/mercurius/ (sign-in details for judges on request). It
 resets nightly at 09:00 UTC and is capped at 400 AI runs a day.
 
+**Demo video:** [download the MP4](https://github.com/xJuan21/mercurius-agents/releases/download/media-v1/mercurius-agents-demo.mp4) (110 s, silent, with captions).
+
 ![Documenter finds a contradiction and proposes a fix](docs/screenshots/chat-documenter.png)
 
 ## The problem
@@ -23,6 +25,7 @@ can rate them. Code reviews wait, and nobody knows what the AI tools cost.
 | A disk alert arrives | **Sentinel** | Checks known issues, rates it high and proposes a message for the person on call |
 | A developer pastes a line | **Forge** | Compiles it without running it, checks it against the team's standards and names the broken rule |
 | A lead asks "what did the agents cost?" | **Query** | Writes the SQL, validates it without running it, and shows it |
+| A class needs tests | **Tester** | Reads the class, writes `%UnitTest` tests and compiles them in a throwaway namespace. A person reads the code and approves it, and the tests run in a fresh throwaway namespace. The result lands in the inbox |
 | A new need appears | **Build an agent** | Anyone with access creates a new agent in the UI, with its own decisions, tools and fallback rules. It runs in the production straight away, with no new class |
 
 Agents are stored records, not generated classes. One runtime runs them all. Each agent has
@@ -57,9 +60,9 @@ An invalid or failed reply never gets accepted: it goes to review.
 |---|---|
 | Decide | Every run ends in a decision from the agent's own list. Invalid replies go to review |
 | Use tools | Search knowledge, link notes, flag conflicts, read and save memory, each granted per agent |
-| Propose actions | Send a notification, or update a note. Nothing runs until a person approves it in **Review**; approval re-checks the proposal and runs it through the production |
+| Propose actions | Send a notification, update a note, or run unit tests. Nothing runs until a person approves it in **Review**; approval re-checks the proposal and runs it through the production |
 | Keep working without AI | If there's no key or the provider fails, the agent's fallback rules decide. These runs are labelled **Rules, not AI** and always go to review |
-| Check, not guess | Forge compiles code as a throwaway routine, which never runs it. Query prepares SQL without running it, only SELECT, only the `Mercurius_Model` schema |
+| Check, not guess | Forge compiles code as a throwaway routine, which never runs it. Query prepares SQL without running it, only SELECT, only the `Mercurius_Model` schema. Tester compiles its tests in a namespace that's created for the check and dropped after it |
 | Choose their model | Each agent has its own provider and model, chosen from the provider's live list. Only providers with a key are offered |
 | Show their cost | Each run records the model, tokens and an estimated cost |
 
@@ -94,6 +97,27 @@ Run it yourself:
 
 ```bash
 echo 'Do ##class(Mercurius.Test.Eval).Run() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
+```
+
+### Tester: mutation score
+
+`Mercurius.Test.Mutation` asks Tester for tests on `Mercurius.Demo.OrderValidator`, then runs
+them against 8 copies of the class, each with one deliberate bug, such as `<` turned into `<=`.
+On build 109 with gpt-4.1, 2026-11-09, five sets of tests:
+
+| Run | Tests, all passing on the real class | Bugs caught |
+|---|---|---|
+| 1 | 14 | 8 of 8 |
+| 2 | 14 | 8 of 8 |
+| 3 | 15 | 7 of 8 |
+| 4 | 12 | 6 of 8 |
+| 5 | 13 | 6 of 8 |
+
+- 35 of 40 in total. Every missed bug was a narrow boundary: a price between -1 and 0, or a total of exactly the limit.
+- In the tuning runs before these, 2 of 6 sets had one wrong test that expected `2*7 + 3*10`. ObjectScript evaluates that left to right, as 170, so the test failed on the real class. The run reports that before anyone relies on the tests, which is why a person approves and reads the result.
+
+```bash
+echo 'Do ##class(Mercurius.Test.Mutation).Run(3) Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP
 ```
 
 ## Requirements
@@ -255,6 +279,11 @@ so it's a possible later direction once the classes are no longer experimental.
 - `KnowledgeService` enforces ownership, so relationships can't cross agents.
 - Every tool call is audited in `Mercurius.Model.AgentToolCall`.
 - Agents get no SQL, filesystem or shell tools.
+- Tester's code never enters the application namespace. It compiles in a namespace created
+  for the check and dropped afterwards, and runs only after a person approves it, in another
+  fresh namespace. Code that uses globals, `$NAMESPACE`, `Xecute`, `$ZF`, files, the network,
+  `%SYS` or system classes is refused before compiling, and again at approval. This blocks
+  the obvious ways out; the approval is the real control, so read the code before you approve it.
 - The API requires a token, and users need the `MercuriusAccess` resource. `/mercurius/` serves only the built web files.
 - Use HTTPS or a private network: passwords are sent at sign-in.
 
@@ -271,6 +300,7 @@ so it's a possible later direction once the classes are no longer experimental.
 ## Known limitations
 
 - Knowledge search is basic text matching, so related notes can be missed.
+- Tester can test only classes in `Mercurius.Demo` (`TestSandbox.PACKAGES`). The sandbox runs as the production's user, so the refusal list and the approval are what keep tests contained.
 - A conflict is an AI finding, not a verified fact.
 - Approved notifications go to the in-app inbox. To deliver them elsewhere, point the `NotifyTarget` setting of `ActionIngress` at another operation.
 - An LLM call that hangs has no timeout of its own.

@@ -126,6 +126,18 @@ ClassMethod SeedAgents() As %Status
     }
     Set SC = ..Grant("Sentinel", "ProposeNotification")
     Return:($$$ISERR(SC)) SC
+
+    Set Prompt = "You write %UnitTest tests for InterSystems IRIS classes. Use DescribeClass on the class named in the request. Write one class named Test. plus the full class name with its dots, Cover every method of the class, with one Test method per behaviour: the valid case, each error branch, and the boundaries. Follow this shape exactly, with each brace on its own line:"_$CHAR(10)_..Lines("Class Test.Mercurius.Demo.OrderValidator Extends %UnitTest.TestCase", "{", "", "Method TestNoItems()", "{", "    Set Result = ##class(Mercurius.Demo.OrderValidator).Validate({""id"":""A1"",""items"":[]})", "    Do $$$AssertEquals(Result, ""No items."")", "}", "", "}", "")_"Write JSON literals directly in the code, as above; never put JSON in a string and never use backslashes. Test method names use only letters and digits. Write expected values as literals, such as 31, never as arithmetic: ObjectScript evaluates operators strictly left to right. The only macros are $$$AssertEquals, $$$AssertNotEquals and $$$AssertTrue, always called with Do. Tests call only the class under test: no globals, files, network or system classes. Then use ProposeTests. When it reports a problem, fix that problem and call ProposeTests again; keep going until it says the tests were proposed, at most four tries. proposed: ProposeTests said the tests were proposed; put the test class name in output. clarify: no class was named, DescribeClass can't read it, or the tests still don't compile after four tries; say why. refused: the request asks for anything other than tests."
+    Set SC = ..SaveAgent("Tester", "Unit test writer", "I write %UnitTest tests for your classes. They compile in a throwaway namespace and run there only after you approve them.", Prompt, "Precise and technical", "proposed,clarify,refused", "clarify,refused", "Event", "shield", ..Lines("kill ^ => refused", "delete => refused"))
+    Return:($$$ISERR(SC)) SC
+    Set Agent = ##class(Mercurius.Model.AgentDefinition).NameIndexOpen("Tester")
+    Set Agent.ModelName = "gpt-4.1"
+    Set SC = Agent.%Save()
+    Return:($$$ISERR(SC)) SC
+    For Tool = "DescribeClass", "ProposeTests" {
+        Set SC = ..Grant("Tester", Tool)
+        Return:($$$ISERR(SC)) SC
+    }
     Return ..ResetKnowledge()
 }
 
@@ -167,7 +179,7 @@ ClassMethod Grant(pAgentName As %String, pToolKey As %String) As %Status
 /// created, and resets the sample agents, knowledge and memory.
 ClassMethod ResetDemo() As %Status
 {
-    Set Seeded = $LISTBUILD("Documenter", "Sentinel", "Forge", "Query")
+    Set Seeded = $LISTBUILD("Documenter", "Sentinel", "Forge", "Query", "Tester")
     Set Statement = ##class(%SQL.Statement).%ExecDirect(, "SELECT ID, Name FROM Mercurius_Model.AgentDefinition")
     While (Statement.%Next()) {
         Continue:($LISTFIND(Seeded, Statement.Name))

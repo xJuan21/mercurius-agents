@@ -15,7 +15,9 @@ ClassMethod List() As %DynamicArray
         {"key":"CheckSyntax", "label":"Check ObjectScript syntax", "description":"Compile code without running it and report syntax errors"},
         {"key":"DescribeSchema", "label":"Describe tables", "description":"List the tables and columns of an allowed schema"},
         {"key":"CheckSQL", "label":"Validate SQL", "description":"Prepare a SELECT without running it and report its columns or errors"},
-        {"key":"ProposeKnowledgeUpdate", "label":"Propose knowledge update", "description":"Suggest new content for one of its notes; it changes only after approval"}
+        {"key":"ProposeKnowledgeUpdate", "label":"Propose knowledge update", "description":"Suggest new content for one of its notes; it changes only after approval"},
+        {"key":"DescribeClass", "label":"Read class source", "description":"Read the source of a class in an allowed package"},
+        {"key":"ProposeTests", "label":"Propose unit tests", "description":"Compile tests in a throwaway namespace; they run there only after approval"}
     ]
 }
 

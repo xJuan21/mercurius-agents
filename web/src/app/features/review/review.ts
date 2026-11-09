@@ -12,6 +12,8 @@ interface ProposalView extends Proposal {
   before?: string;
   after?: string;
   reason?: string;
+  className?: string;
+  code?: string;
 }
 
 @Component({

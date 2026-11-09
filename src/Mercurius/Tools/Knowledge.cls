@@ -16,6 +16,8 @@ XData Definition [ MimeType = application/xml ]
   <Tool Name="DescribeSchema" Method="DescribeSchema"/>
   <Tool Name="CheckSQL" Method="CheckSQL"/>
   <Tool Name="ProposeKnowledgeUpdate" Method="ProposeKnowledgeUpdate"/>
+  <Tool Name="DescribeClass" Method="DescribeClass"/>
+  <Tool Name="ProposeTests" Method="ProposeTests"/>
 </ToolSet>
 }
 
@@ -94,6 +96,19 @@ Method DescribeSchema(pSchema As %String(DESCRIPTION = "Schema name, such as Mer
 Method CheckSQL(pQuery As %String(DESCRIPTION = "One SELECT statement")) As %String
 {
     Return ##class(Mercurius.Runtime.CodeCheck).SQL(pQuery)
+}
+
+/// Returns the source of a class you may test.
+Method DescribeClass(pClassName As %String(DESCRIPTION = "Full class name, such as Mercurius.Demo.OrderValidator")) As %String
+{
+    Return ##class(Mercurius.Runtime.TestSandbox).Describe(pClassName)
+}
+
+/// Compiles a %UnitTest class for one class and proposes running it. Nothing runs until someone approves it.
+Method ProposeTests(pClassName As %String(DESCRIPTION = "The class under test"), pTestCode As %String(DESCRIPTION = "The full test class source"), pReason As %String(DESCRIPTION = "What the tests cover")) As %String
+{
+    Set SC = ##class(Mercurius.Runtime.ActionService).ProposeTests(..AgentName, ..ExecutionId, pClassName, pTestCode, pReason)
+    Return $SELECT($$$ISOK(SC):"Tests compiled and proposed for approval", 1:$SYSTEM.Status.GetErrorText(SC))
 }
 
 }

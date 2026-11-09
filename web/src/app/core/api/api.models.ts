@@ -89,7 +89,7 @@ export interface Proposal {
   Id: string;
   AgentName: string;
   ExecutionId: string;
-  ActionType: 'Notify' | 'UpdateKnowledge';
+  ActionType: 'Notify' | 'UpdateKnowledge' | 'RunTests';
   Summary: string;
   Payload: string;
   Status: ProposalStatus;

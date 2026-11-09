@@ -4,6 +4,9 @@ An AI operations desk for an InterSystems IRIS integration team, built on IRIS A
 Interoperability. Your team defines the agents; each one works inside a real production
 and acts only with a person's approval.
 
+**Live demo:** https://mercurius.juan-mota.com/mercurius/ (sign-in details for judges on request). It
+resets nightly at 09:00 UTC and is capped at 400 AI runs a day.
+
 ![Documenter finds a contradiction and proposes a fix](docs/screenshots/chat-documenter.png)
 
 ## The problem
@@ -207,6 +210,7 @@ refresh token stays in `sessionStorage`, so it ends with the browser tab.
 | Bonus | Where to see it |
 |---|---|
 | Docker | `Dockerfile` and `docker-compose.yml`: `docker compose up -d --build` |
+| Online demo | https://mercurius.juan-mota.com/mercurius/, live with real models, added 2026-11-09 |
 | IPM (ZPM) | `module.xml`: `zpm "install mercurius-agents"` installs the backend, and `zpm "mercurius-agents test"` runs the tests |
 | AI Hub bugs | [ai-hub-eap-bugreports #25](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/25): a tool hidden by `%CanList` is rejected with no audit record. [#26](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/26): `iris-main` aborts with exit 134 when the working directory isn't writable |
 
@@ -233,6 +237,13 @@ We tested them on build 109 and kept our own `AgentRunner` operation.
 
 Subclassing the adapter and using its `OnAfterAgentInit` hook does give per-agent tools,
 so it's a possible later direction once the classes are no longer experimental.
+
+## Hosting a public demo
+
+- Set `MERCURIUS_DAILY_AI_LIMIT` in `.env` to cap AI runs per day; over the limit, fallback rules decide.
+- Expose only `/mercurius/` through your reverse proxy or tunnel, never the Management Portal.
+- Change the image's default passwords, and give visitors a user with only the `MercuriusUser` role.
+- Reset nightly: `echo 'Do ##class(Mercurius.Setup).ResetDemo() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP`
 
 ## Security
 

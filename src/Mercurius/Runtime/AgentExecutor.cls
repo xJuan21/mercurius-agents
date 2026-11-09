@@ -15,6 +15,8 @@ ClassMethod Execute(pAgentName As %String, pInput As %String, Output pReply As %
             $$$ThrowStatus($$$ERROR($$$GeneralError, "Agent is disabled: "_pAgentName))
         }
 
+        $$$ThrowOnError(..CheckDailyLimit(+$SYSTEM.Util.GetEnviron("MERCURIUS_DAILY_AI_LIMIT")))
+
         Set KeyName = $ZCONVERT(Definition.ProviderName, "U")_"_API_KEY"
         Set Key = $SYSTEM.Util.GetEnviron(KeyName)
         If (Key = "") {
@@ -66,6 +68,15 @@ ClassMethod AttachTools(pAgent As %AI.Agent, pAgentName As %String, pExecutionId
     Set Audit.AgentName = pAgentName
     Set Audit.ExecutionId = pExecutionId
     Return pAgent.ToolManager.SetAuditPolicy(Audit)
+}
+
+/// Counts AI runs per day. Over the limit, the run fails here and the agent's fallback
+/// rules decide instead. A limit of 0 means no limit.
+ClassMethod CheckDailyLimit(pLimit As %Integer, pDay As %String = {$ZDATE($HOROLOG, 3)}) As %Status
+{
+    Return:(pLimit < 1) $$$OK
+    Return:($INCREMENT(^Mercurius.Usage(pDay)) <= pLimit) $$$OK
+    Return $$$ERROR($$$GeneralError, "The daily AI limit of "_pLimit_" runs is reached; fallback rules decide until tomorrow (UTC).")
 }
 
 /// Removes API keys from text before it's logged or stored. Providers can echo them in errors.

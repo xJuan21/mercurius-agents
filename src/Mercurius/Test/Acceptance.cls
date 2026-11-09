@@ -58,6 +58,13 @@ ClassMethod Run() As %Boolean
     Set Bad = ##class(Mercurius.Runtime.AgentService).Validate({"name":"Atlas","role":"x","instructions":"y","allowedDecisions":"a","provider":"openai","model":"no-such-model"}, 1)
     Set Passed = ..Check("A model outside the provider's list is rejected", Bad '= "") && Passed
 
+    Set Day = "test-"_$JOB
+    Kill ^Mercurius.Usage(Day)
+    Set First = ##class(Mercurius.Runtime.AgentExecutor).CheckDailyLimit(1, Day)
+    Set Second = ##class(Mercurius.Runtime.AgentExecutor).CheckDailyLimit(1, Day)
+    Kill ^Mercurius.Usage(Day)
+    Set Passed = ..Check("The daily AI limit stops runs past the limit", $$$ISOK(First) && $$$ISERR(Second)) && Passed
+
     Set Redacted = ##class(Mercurius.Runtime.AgentExecutor).Redact("Incorrect API key provided: sk-proj-abc123DEF456")
     Set Passed = ..Check("API keys are removed from stored errors", '(Redacted [ "abc123DEF456") && (Redacted [ "[REDACTED]")) && Passed
 

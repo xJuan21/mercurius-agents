@@ -147,6 +147,9 @@ ClassMethod SaveAgent(pName As %String, pRole As %String, pDescription As %Strin
     Set Definition.ReviewDecisions = pReviewDecisions
     Set Definition.InputType = pInputType
     Set Definition.Symbol = pSymbol
+    Set Definition.ProviderName = "openai"
+    Set Definition.ModelName = "gpt-4.1-mini"
+    Set Definition.Enabled = 1
     Set Definition.FallbackRules = pFallbackRules
     Return Definition.%Save()
 }
@@ -158,6 +161,23 @@ ClassMethod Grant(pAgentName As %String, pToolKey As %String) As %Status
     Set Permission.AgentName = pAgentName
     Set Permission.ToolKey = pToolKey
     Return Permission.%Save()
+}
+
+/// Restores a public demo to its starting state: removes agents and runs that visitors
+/// created, and resets the sample agents, knowledge and memory.
+ClassMethod ResetDemo() As %Status
+{
+    Set Seeded = $LISTBUILD("Documenter", "Sentinel", "Forge", "Query")
+    Set Statement = ##class(%SQL.Statement).%ExecDirect(, "SELECT ID, Name FROM Mercurius_Model.AgentDefinition")
+    While (Statement.%Next()) {
+        Continue:($LISTFIND(Seeded, Statement.Name))
+        Set Name = Statement.Name
+        &sql(DELETE FROM Mercurius_Model.AgentToolPermission WHERE AgentName = :Name)
+        Do ##class(Mercurius.Model.AgentDefinition).%DeleteId(Statement.ID)
+    }
+    Do ##class(Mercurius.Model.AgentExecution).%KillExtent()
+    Do ##class(Mercurius.Model.AgentToolCall).%KillExtent()
+    Return ..SeedAgents()
 }
 
 /// Restores the sample knowledge and memory used by the demo.

@@ -69,7 +69,7 @@ An invalid or failed reply never gets accepted: it goes to review.
 |---|---|
 | ![Dashboard with agents, pending reviews and recent activity](docs/screenshots/dashboard.png) | ![Query writes and validates SQL](docs/screenshots/chat-query.png) |
 | ![Proposed actions wait for approval](docs/screenshots/review.png) | ![History with tokens and cost](docs/screenshots/history.png) |
-| ![Build an agent](docs/screenshots/builder.png) | |
+| ![Build an agent](docs/screenshots/builder.png) | ![Knowledge graph: notes linked by the Documenter](docs/screenshots/knowledge-graph.png) |
 
 ## Measured results
 
@@ -174,7 +174,7 @@ portal and give it the `MercuriusUser` role.
 | Agents | Shows the agents. **Build an agent** creates a stored agent that runs immediately |
 | Review | Approve or reject proposed actions, and resolve possible contradictions |
 | Inbox | Notifications a person approved |
-| Memory, Knowledge | Show what the selected agent holds privately |
+| Memory, Knowledge | Show what the selected agent holds privately. Knowledge has cards, a note reader and a graph of how notes connect |
 | History | Shows every run, including those from the file services |
 
 To send the sample events through the file services instead:

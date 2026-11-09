@@ -3,7 +3,7 @@
   <Document name="mercurius-agents.ZPM">
     <Module>
       <Name>mercurius-agents</Name>
-      <Version>0.1.2</Version>
+      <Version>0.1.3</Version>
       <Description>Configurable AI Hub agents that make decisions inside IRIS Interoperability productions</Description>
       <Keywords>ai-hub agents interoperability</Keywords>
       <Packaging>module</Packaging>

@@ -1,20 +1,61 @@
 <main class="login">
+  <a class="brand" href="#/login" aria-label="Mercurius home"
+    ><span class="mark"><img src="mercurius-logo.jpg" alt="" /></span><span>MERCURIUS</span></a
+  >
+  <section class="intro">
+    <h1>Intelligent agents<br />for <span>real work.</span></h1>
+    <p>
+      Create, manage, and collaborate with AI agents<br class="desktop" />
+      that get work done.
+    </p>
+  </section>
+  <div class="wave" aria-hidden="true"></div>
   <form class="panel" [formGroup]="form" (ngSubmit)="signIn()">
-    <div class="brand"><span class="logo">m</span>mercurius<span class="dot-accent">.</span></div>
-    <h1>Sign in</h1>
-    <p class="hint">Intelligent companions. Powerful workflows.</p>
-
+    <h2>Sign In</h2>
+    <p class="subtitle">Use your InterSystems IRIS account</p>
     <label class="field-label" for="user">Username</label>
-    <input id="user" class="input" formControlName="user" autocomplete="username" autocapitalize="none" />
-
+    <input
+      id="user"
+      class="input"
+      formControlName="user"
+      autocomplete="username"
+      autocapitalize="none"
+      required
+    />
     <label class="field-label" for="password">Password</label>
-    <input id="password" class="input" type="password" formControlName="password" autocomplete="current-password" />
-
+    <div class="password">
+      <input
+        id="password"
+        class="input"
+        [type]="showPassword() ? 'text' : 'password'"
+        formControlName="password"
+        autocomplete="current-password"
+        required
+      /><button
+        type="button"
+        (click)="showPassword.set(!showPassword())"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        [attr.aria-pressed]="showPassword()"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          aria-hidden="true"
+        >
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </button>
+    </div>
     @if (error()) {
       <p class="error" role="alert">{{ error() }}</p>
     }
-
-    <button type="submit" class="btn primary" [disabled]="busy()">{{ busy() ? 'Signing in…' : 'Sign in' }}</button>
-    <p class="hint footer">Use your InterSystems IRIS account.</p>
+    <button type="submit" class="btn primary" [disabled]="busy()">
+      {{ busy() ? 'Signing in…' : 'Sign In' }}
+    </button>
   </form>
 </main>

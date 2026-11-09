@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { AgentStore } from '../../core/state/agent.store';
 import { PORTAL_URL, splitList } from '../../core/state/format';
@@ -23,10 +32,28 @@ export class Shell implements OnInit {
   protected readonly initials = computed(() => this.auth.username().slice(0, 2).toUpperCase());
   protected readonly selectedTools = computed(() => splitList(this.store.selected()?.Tools));
   protected readonly ruleCount = computed(
-    () => (this.store.selected()?.FallbackRules ?? '').split('\n').filter((line) => line.includes('=>')).length,
+    () =>
+      (this.store.selected()?.FallbackRules ?? '').split('\n').filter((line) => line.includes('=>'))
+        .length,
   );
-  protected readonly reviewCount = computed(() => this.store.openConflicts() + this.store.pendingActions());
+  protected readonly reviewCount = computed(
+    () => this.store.openConflicts() + this.store.pendingActions(),
+  );
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+  private readonly currentPage = computed(() => this.currentUrl().split(/[?#]/)[0]);
+  protected readonly isDashboard = computed(() => this.currentPage() === '/dashboard');
+  protected readonly showAgentDetails = computed(
+    () => !!this.store.selected() && ['/chat', '/agents'].includes(this.currentPage()),
+  );
+
   protected readonly pages = [
+    { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { path: '/chat', label: 'Chat', icon: 'chat' },
     { path: '/agents', label: 'Agents', icon: 'agents' },
     { path: '/review', label: 'Review', icon: 'review' },

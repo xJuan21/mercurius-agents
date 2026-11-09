@@ -63,6 +63,9 @@ Method Run(pRequest As Mercurius.Interop.Msg.AgentRequest, Output pResponse As M
     Set Execution.OutputSummary = pResponse.Result
     Set Execution.ErrorDetails = pResponse.ErrorMessage
     Set Execution.Engine = pResponse.Engine
+    // Set the route here too: the handler that also records it runs after the caller has the
+    // response, so a UI reading the run straight away would otherwise see no route.
+    Set Execution.Route = $SELECT(pResponse.NeedsReview:"Review", 1:"Accepted")
     Set Execution.PromptTokens = pResponse.PromptTokens
     Set Execution.CompletionTokens = pResponse.CompletionTokens
     Set Execution.CostUSD = pResponse.CostUSD

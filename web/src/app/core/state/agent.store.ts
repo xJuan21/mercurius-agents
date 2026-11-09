@@ -12,6 +12,8 @@ export class AgentStore {
   readonly tools = signal<Tool[]>([]);
   readonly openConflicts = signal(0);
   readonly pendingActions = signal(0);
+  /** False on deployments whose Management Portal isn't reachable, such as a public demo. */
+  readonly portalLinks = signal(true);
   readonly selected = computed(
     () => this.agents().find((agent) => agent.Name === this.selectedName()) ?? this.agents()[0] ?? null,
   );
@@ -22,6 +24,7 @@ export class AgentStore {
   load(): void {
     this.api.agents().subscribe((agents) => this.agents.set(agents));
     this.api.tools().subscribe((tools) => this.tools.set(tools));
+    this.api.config().subscribe((config) => this.portalLinks.set(!!config.portalLinks));
     this.refreshCounts();
   }
 

@@ -67,8 +67,9 @@ An invalid or failed reply never gets accepted: it goes to review.
 
 | | |
 |---|---|
-| ![Query writes and validates SQL](docs/screenshots/chat-query.png) | ![Proposed actions wait for approval](docs/screenshots/review.png) |
-| ![History with tokens and cost](docs/screenshots/history.png) | ![Build an agent](docs/screenshots/builder.png) |
+| ![Dashboard with agents, pending reviews and recent activity](docs/screenshots/dashboard.png) | ![Query writes and validates SQL](docs/screenshots/chat-query.png) |
+| ![Proposed actions wait for approval](docs/screenshots/review.png) | ![History with tokens and cost](docs/screenshots/history.png) |
+| ![Build an agent](docs/screenshots/builder.png) | ![Knowledge graph: notes linked by the Documenter](docs/screenshots/knowledge-graph.png) |
 
 ## Measured results
 
@@ -169,10 +170,11 @@ portal and give it the `MercuriusUser` role.
 | Page | What it does |
 |---|---|
 | Chat | Sends a message through the production and shows the agent's decision, tools and trace |
+| Dashboard | Agents, pending reviews, open conflicts and recent activity at a glance |
 | Agents | Shows the agents. **Build an agent** creates a stored agent that runs immediately |
 | Review | Approve or reject proposed actions, and resolve possible contradictions |
 | Inbox | Notifications a person approved |
-| Memory, Knowledge | Show what the selected agent holds privately |
+| Memory, Knowledge | Show what the selected agent holds privately. Knowledge has cards, a note reader and a graph of how notes connect |
 | History | Shows every run, including those from the file services |
 
 To send the sample events through the file services instead:
@@ -241,7 +243,7 @@ so it's a possible later direction once the classes are no longer experimental.
 ## Hosting a public demo
 
 - Set `MERCURIUS_DAILY_AI_LIMIT` in `.env` to cap AI runs per day; over the limit, fallback rules decide.
-- Expose only `/mercurius/` through your reverse proxy or tunnel, never the Management Portal.
+- Expose only `/mercurius/` through your reverse proxy or tunnel, never the Management Portal. Set `MERCURIUS_PORTAL_LINKS=0` so the UI shows trace session numbers without links into the private portal.
 - Change the image's default passwords, and give visitors a user with only the `MercuriusUser` role.
 - Reset nightly: `echo 'Do ##class(Mercurius.Setup).ResetDemo() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP`
 
@@ -263,10 +265,8 @@ so it's a possible later direction once the classes are no longer experimental.
 | Container restarts with exit 134: `Unable to find/open file iris-main.log` | The repo is bind-mounted over the working directory, and the IRIS user can't write there | `working_dir: /home/irisowner` in `docker-compose.yml` |
 | `<PRIVATE METHOD>` from `ToolManager.AddToolSetInstance()` | The method is private | Use `ToolManager.AddTool(instance)`, which keeps instance properties through `Chat()` |
 | A tool hidden by `%CanList` isn't audited when called | The call fails as `ToolNotFound`, before `%CanExecute` and `%LogDenial` | Also check permissions in your own services |
-| `No repositories are configured` from `zpm` in another namespace | `enable -community` alone doesn't map the repositories | Also run `zpm "enable -map -repos -globally"` in `%SYS` |
 | A static web application returns 404 at its root | It has no default document | Serve `index.html` from a small dispatch class, as `Mercurius.API.Web` does |
 | Every `%CSP.REST` route returns the same output | A method named `Page` overrides `%CSP.Page` | Use another method name |
-| An API call fails on a `Role` column | `Role` is reserved in SQL | Quote it |
 
 ## Known limitations
 

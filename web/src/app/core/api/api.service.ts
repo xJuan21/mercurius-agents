@@ -45,6 +45,10 @@ export class ApiService {
     return this.http.get<ProviderModels[]>(`${API_URL}/models`, { params });
   }
 
+  config(): Observable<{ portalLinks: boolean | number }> {
+    return this.http.get<{ portalLinks: boolean | number }>(`${API_URL}/config`);
+  }
+
   tools(): Observable<Tool[]> {
     return this.http.get<Tool[]>(`${API_URL}/tools`);
   }

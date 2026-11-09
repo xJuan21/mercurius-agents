@@ -1,29 +1,234 @@
-<div class="page">
-  <h1>Knowledge</h1>
-  <p class="page-lead">What {{ store.selected()?.Name }} knows. Other agents can't see this.</p>
-
-  @if (links().length) {
-    <h2 class="section-title">Relationships</h2>
-    <div class="stack">
-      @for (link of links(); track $index) {
-        <div class="tile link">
-          <span class="badge" [class.review]="link.type === 'CONTRADICTS'">{{ link.type }}</span>
-          <span>{{ link.source }} <span class="arrow">→</span> {{ link.target }}</span>
-        </div>
-      }
+<div class="knowledge-page">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">AGENT WORKSPACE</span>
+      <h1>Knowledge</h1>
+      <p>Explore the notes and connections behind your agents.</p>
     </div>
-  }
-
-  <h2 class="section-title">Items</h2>
-  <div class="grid">
-    @for (node of data().nodes; track node.Id) {
-      <div class="tile">
-        <small>{{ node.NodeType }}</small>
-        <h2>{{ node.Title }}</h2>
-        <p>{{ node.Content }}</p>
-      </div>
-    } @empty {
-      <p class="empty">This agent has no knowledge yet.</p>
+    <label class="agent-picker"
+      >Agent<select
+        class="input"
+        aria-label="Knowledge agent"
+        [value]="store.selected()?.Name || ''"
+        (change)="choose($any($event.target).value)"
+      >
+        @for (agent of store.agents(); track agent.Name) {
+          <option [value]="agent.Name">{{ agent.Name }}</option>
+        }
+      </select></label
+    >
+  </header>
+  <section class="toolbar" aria-label="Knowledge controls">
+    <label class="search"
+      >Search notes<input
+        class="input"
+        type="search"
+        placeholder="Search titles and content…"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+    /></label>
+    <label class="filter"
+      >Type<select class="input" [value]="type()" (change)="type.set($any($event.target).value)">
+        <option value="">All types</option>
+        @for (t of types(); track t) {
+          <option [value]="t">{{ t }}</option>
+        }
+      </select></label
+    >
+    <div class="view-switch" role="group" aria-label="Knowledge view">
+      <button
+        [class.active]="mode() === 'cards'"
+        [attr.aria-pressed]="mode() === 'cards'"
+        (click)="mode.set('cards')"
+      >
+        Cards</button
+      ><button
+        [class.active]="mode() === 'graph'"
+        [attr.aria-pressed]="mode() === 'graph'"
+        (click)="mode.set('graph')"
+      >
+        Graph
+      </button>
+    </div>
+  </section>
+  @if (loading()) {
+    <div class="state" role="status">Loading notes…</div>
+  } @else if (error()) {
+    <div class="state" role="alert">
+      <h2>Notes unavailable</h2>
+      <p>{{ error() }}</p>
+      <button class="btn" (click)="retry()">Try again</button>
+    </div>
+  } @else if (!store.selected()) {
+    <div class="state">
+      <h2>No agents yet</h2>
+      <p>Create an agent to start building its knowledge.</p>
+    </div>
+  } @else {
+    <div class="results">
+      <span
+        >{{ filtered().length }} of {{ data().nodes.length }} notes ·
+        {{ store.selected()?.Name }}</span
+      ><button class="text-button" (click)="retry()">Refresh</button>
+    </div>
+    @if (data().nodes.length >= 200 || data().edges.length >= 200) {
+      <p class="limit">This view shows up to 200 notes and 200 connections for this agent.</p>
     }
-  </div>
+    @if (!data().nodes.length) {
+      <div class="state">
+        <h2>A fresh knowledge space</h2>
+        <p>
+          {{ store.selected()?.Name }} has no notes yet. Notes saved through the agent’s workflows
+          will appear here.
+        </p>
+      </div>
+    } @else if (!filtered().length) {
+      <div class="state">
+        <h2>No matching notes</h2>
+        <p>Try a different search or note type.</p>
+        <button class="btn" (click)="clear()">Clear filters</button>
+      </div>
+    } @else if (mode() === 'cards') {
+      <div class="note-grid">
+        @for (note of filtered(); track note.Id) {
+          <button
+            class="note-card"
+            [class.selected]="selectedId() === '' + note.Id"
+            (click)="open(note, $event)"
+          >
+            <span class="card-top"
+              ><span class="badge">{{ note.NodeType }}</span
+              ><span aria-hidden="true">↗</span></span
+            >
+            <h2>{{ note.Title || 'Untitled note' }}</h2>
+            <p class="preview">{{ note.Content }}</p>
+            <span class="card-footer"
+              ><span>{{ connections(note.Id) }} connections</span
+              ><time>{{ note.CreatedAt.slice(0, 10) }}</time></span
+            >
+          </button>
+        }
+      </div>
+    } @else {
+      <section class="graph-panel" aria-label="Knowledge graph">
+        <div class="graph-tools">
+          <div>
+            <h2>{{ focused() ? 'Connected notes' : 'Knowledge graph' }}</h2>
+            <p>Select a note to read it. Drag the background to explore.</p>
+          </div>
+          <div class="graph-buttons">
+            <button class="btn" aria-label="Zoom out" (click)="scale(0.8)">−</button
+            ><span>{{ (zoom() * 100).toFixed(0) }}%</span
+            ><button class="btn" aria-label="Zoom in" (click)="scale(1.25)">+</button
+            ><button class="btn" (click)="fit()">Fit</button>
+            @if (focused()) {
+              <button class="btn" (click)="focused.set(false); fit()">Show all</button>
+            }
+          </div>
+        </div>
+        @if (!graph().length) {
+          <div class="state">
+            <p>No connected notes match your filters.</p>
+            <button class="btn" (click)="clear()">Clear filters</button>
+          </div>
+        }
+        <svg
+          class="graph"
+          viewBox="0 0 1000 800"
+          role="group"
+          aria-label="Notes and their relationships"
+          (pointerdown)="startPan($event)"
+          (pointermove)="movePan($event)"
+          (pointerup)="endPan()"
+          (pointercancel)="endPan()"
+        >
+          <defs>
+            <marker
+              id="knowledge-arrow"
+              viewBox="0 0 10 10"
+              refX="20"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#7194be" />
+            </marker>
+          </defs>
+          <g [attr.transform]="transform()">
+            @for (edge of graphEdges(); track edge.key) {
+              <line
+                [attr.x1]="edge.source.x"
+                [attr.y1]="edge.source.y"
+                [attr.x2]="edge.target.x"
+                [attr.y2]="edge.target.y"
+                [class.conflict]="edge.RelationshipType === 'CONTRADICTS'"
+                marker-end="url(#knowledge-arrow)"
+              >
+                <title>
+                  {{ edge.source.Title }} → {{ label(edge.RelationshipType) }} →
+                  {{ edge.target.Title }}
+                </title>
+              </line>
+            }
+            @for (node of graph(); track node.Id) {
+              <g
+                class="graph-node"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="'Read ' + node.Title"
+                [class.selected]="selectedId() === '' + node.Id"
+                [class.dimmed]="selectedId() && !neighbors().has('' + node.Id)"
+                [attr.transform]="'translate(' + node.x + ' ' + node.y + ')'"
+                (click)="open(node, $event)"
+                (keydown.enter)="$event.preventDefault(); open(node, $event)"
+                (keydown.space)="$event.preventDefault(); open(node, $event)"
+              >
+                <circle r="15" />
+                <text y="35" text-anchor="middle">
+                  {{ node.Title.length > 25 ? node.Title.slice(0, 24) + '…' : node.Title }}
+                </text>
+                <title>{{ node.Title }} · {{ node.NodeType }}</title>
+              </g>
+            }
+          </g>
+        </svg>
+        <div class="legend">
+          <span>● Note</span><span>— Relationship (arrows indicate direction)</span
+          ><span class="conflict-label">— Potential conflict flagged by an agent</span>
+        </div>
+      </section>
+    }
+  }
 </div>
+<dialog #reader class="note-reader" aria-labelledby="note-title" (close)="restoreFocus()">
+  @if (selected(); as note) {
+    <header class="reader-head">
+      <span class="badge">{{ note.NodeType }}</span
+      ><button class="btn close" aria-label="Close note" (click)="close()">✕</button>
+    </header>
+    <h2 id="note-title">{{ note.Title || 'Untitled note' }}</h2>
+    <p class="metadata">{{ note.AgentName }} · {{ note.CreatedAt }}</p>
+    <article class="note-content">{{ note.Content }}</article>
+    <section class="related">
+      <div class="related-heading">
+        <h3>Connected notes</h3>
+        <button class="text-button" (click)="focusConnections()">Explore in graph →</button>
+      </div>
+      @for (link of related(); track $index) {
+        @if (link.node; as other) {
+          <button class="related-note" (click)="open(other)">
+            <span class="relation" [class.conflict-label]="link.type === 'CONTRADICTS'"
+              >{{ link.outgoing ? 'Outgoing' : 'Incoming' }} · {{ label(link.type) }}</span
+            ><strong>{{ other.Title }}</strong
+            ><span aria-hidden="true">→</span>
+          </button>
+        } @else {
+          <p class="metadata">Related note outside this view · {{ label(link.type) }}</p>
+        }
+      } @empty {
+        <p class="metadata">No connections recorded for this note yet.</p>
+      }
+    </section>
+  }
+</dialog>

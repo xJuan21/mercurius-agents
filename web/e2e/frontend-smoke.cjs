@@ -1,0 +1,43 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const out = process.env.SCREENSHOT_DIR || '/pw/screenshots';
+fs.mkdirSync(out, {recursive:true});
+if (!process.env.TEST_USER || !process.env.TEST_PASSWORD) throw new Error('Set TEST_USER and TEST_PASSWORD');
+(async()=>{
+ const browser=await chromium.launch({headless:true}); const context=await browser.newContext({viewport:{width:1672,height:1024}}); const p=await context.newPage(); const errors=[];
+ p.on('pageerror',e=>errors.push(e.message));
+ const url=process.env.TEST_URL || 'http://127.0.0.1:52775/mercurius/';
+ const unauth=await context.request.get(url+'api/summary'); assert.equal(unauth.status(),401);
+ await p.goto(url); await p.locator('#user').waitFor(); await p.screenshot({path:out+'/sign-in.png',fullPage:true});
+ await p.fill('#user',process.env.TEST_USER);await p.fill('#password','invalid-redesign-test');await p.click('button[type=submit]');await p.locator('[role=alert]').waitFor();
+ await p.fill('#password',process.env.TEST_PASSWORD);await p.getByRole('button',{name:'Show password'}).click();assert.equal(await p.locator('#password').getAttribute('type'),'text');await p.getByRole('button',{name:'Hide password'}).click();
+ const agentsPromise=p.waitForResponse(r=>r.url().endsWith('/api/agents')&&r.status()===200);
+ const summaryPromise=p.waitForResponse(r=>r.url().endsWith('/api/summary')&&r.status()===200);
+ await p.click('button[type=submit]');const agents=await (await agentsPromise).json();const summary=await(await summaryPromise).json();
+ await p.locator('.metrics').waitFor();assert.equal(await p.locator('.metric strong').nth(0).innerText(),String(agents.length));assert.equal(await p.locator('.metric strong').nth(1).innerText(),String(summary[0].PendingActions||0));assert.equal(await p.locator('.metric strong').nth(2).innerText(),String(summary[0].OpenConflicts||0));
+ await p.screenshot({path:out+'/dashboard.png',fullPage:true});
+ await p.reload();await p.locator('.metrics').waitFor();
+ for(const page of ['chat','agents','review','inbox','memory','history','knowledge']) { await p.locator(`nav a[href="#/${page}"]`).click();await p.waitForTimeout(500);assert.equal(await p.locator('app-'+page).count(),1);await p.screenshot({path:out+'/'+page+'.png',fullPage:true}); }
+ await p.locator('nav a[href="#/chat"]').click();
+ await p.locator('.agent-short').filter({hasText:'Sentinel'}).click();
+ await p.locator('textarea[name="message"]').fill('Frontend verification: server disk has 80 percent free space and all services are healthy.');
+ await p.locator('button.send').click(); await p.locator('.thinking').waitFor(); await p.locator('.thinking').waitFor({state:'detached',timeout:120000});
+ assert(await p.locator('app-decision-card').count()>0);
+ await p.locator('button.build').click();await p.locator('dialog[open]').waitFor();assert.equal(await p.locator('dialog').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(13, 23, 43)');await p.keyboard.press('Escape');
+ await p.goto(url+'#/dashboard');await p.locator('.metrics').waitFor();
+ await p.route('**/api/summary',route=>route.fulfill({status:503,body:'{}'}));await p.getByRole('button',{name:'Refresh',exact:true}).click();await p.locator('[role=alert]').waitFor();assert.equal(await p.locator('.metrics').count(),1);await p.unroute('**/api/summary');await p.getByRole('button',{name:'Refresh',exact:true}).click();await p.waitForTimeout(600);
+ // Controlled response fixtures test UI states without changing IRIS records.
+ await p.route('**/api/proposals',route=>route.fulfill({json:[{Id:'fixture',AgentName:'Sentinel',ActionType:'Notify',Summary:'<script>must remain text</script>',Status:'Proposed'}]}));
+ await p.route('**/api/summary',route=>route.fulfill({json:[{PendingActions:1,OpenConflicts:2}]}));
+ await p.route('**/api/executions',route=>route.fulfill({json:[{ExecutionId:'fixture',AgentName:'Sentinel',Status:'Completed',Decision:'low',StartedAt:'2026-11-09 06:00:00'}]}));
+ await p.getByRole('button',{name:'Refresh',exact:true}).click();await p.locator('.proposal').waitFor();assert((await p.locator('.proposal').innerText()).includes('<script>must remain text</script>'));assert.equal(await p.locator('.proposal script').count(),0);assert.equal(await p.locator('.event').count(),1);
+ await p.route('**/api/agents',route=>route.fulfill({json:[]}));
+ await p.getByRole('button',{name:'Refresh',exact:true}).click();await p.getByText('No agents yet. Create one from Agents.').waitFor();
+ await p.unroute('**/api/proposals');await p.unroute('**/api/summary');await p.unroute('**/api/executions');await p.unroute('**/api/agents');
+ await p.getByRole('button',{name:'Refresh',exact:true}).click();await p.waitForTimeout(600);
+ await p.setViewportSize({width:390,height:844});await p.screenshot({path:out+'/dashboard-mobile.png',fullPage:true});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await p.getByRole('button',{name:'Open navigation'}).click();await p.locator('nav a[href="#/chat"]').click();assert.equal(await p.locator('.sidebar.open').count(),0);
+ await p.getByRole('button',{name:'Open navigation'}).click();await p.getByRole('button',{name:'Sign out',exact:true}).click();await p.locator('#user').waitFor();await p.screenshot({path:out+'/sign-in-mobile.png',fullPage:true});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ assert.deepEqual(errors,[]);console.log('PASS: unauthenticated API, invalid login, password toggle, real-data dashboard counts, refresh-session reload, seven routes, Sentinel production chat, agent dialog, refresh failure/recovery, mobile layout/navigation, sign-out, zero browser exceptions');await browser.close();
+})().catch(e=>{console.error(e.message);process.exit(1)});

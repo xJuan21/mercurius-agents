@@ -42,6 +42,10 @@
     @if (usage()) {
       <span>{{ usage() }}</span>
     }
-    <a [href]="trace()" target="_blank" rel="noopener">Message trace {{ execution().InteropSessionId }} ↗</a>
+    @if (portalLinks()) {
+      <a [href]="trace()" target="_blank" rel="noopener">Message trace {{ execution().InteropSessionId }} ↗</a>
+    } @else {
+      <span title="Message traces open in the IRIS Management Portal, which isn't public here">Trace session {{ execution().InteropSessionId }}</span>
+    }
   </footer>
 </article>

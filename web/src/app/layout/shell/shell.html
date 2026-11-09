@@ -40,9 +40,15 @@
     </div>
 
     <div class="sidebar-bottom">
-      <a class="environment" [href]="portalUrl" target="_blank" rel="noopener">
-        <span class="status-dot"></span>IRIS portal <span class="end">↗</span>
-      </a>
+      @if (store.portalLinks()) {
+        <a class="environment" [href]="portalUrl" target="_blank" rel="noopener">
+          <span class="status-dot"></span>IRIS portal <span class="end">↗</span>
+        </a>
+      } @else {
+        <span class="environment" title="The IRIS Management Portal isn't public on this deployment">
+          <span class="status-dot"></span>IRIS production
+        </span>
+      }
       <div class="profile">
         <span class="avatar">{{ initials() }}</span>
         <b>{{ auth.username() }}</b>

@@ -22,6 +22,7 @@ export class DecisionCard {
     const unique = new Set(splitList(this.execution().Tools));
     return [...unique].map((key) => this.store.toolLabel(key));
   });
+  protected readonly portalLinks = this.store.portalLinks;
   protected readonly trace = computed(() => traceUrl(this.execution().InteropSessionId));
   protected readonly byRules = computed(() => this.execution().Engine === 'Rules');
   protected readonly usage = computed(() => {

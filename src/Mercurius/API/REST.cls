@@ -17,6 +17,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
   <Route Url="/agents/:name" Method="PUT" Call="UpdateAgent"/>
   <Route Url="/agents/:name/messages" Method="POST" Call="SendMessage"/>
   <Route Url="/tools" Method="GET" Call="ListTools"/>
+  <Route Url="/config" Method="GET" Call="GetConfig"/>
   <Route Url="/models" Method="GET" Call="ListModels"/>
   <Route Url="/summary" Method="GET" Call="GetSummary"/>
   <Route Url="/executions" Method="GET" Call="ListExecutions"/>
@@ -92,6 +93,14 @@ ClassMethod SendMessage(pName As %String) As %Status
         "engine":(Response.Engine),
         "sessionId":(Response.SessionId)
     }.%ToJSON()
+    Return $$$OK
+}
+
+/// Settings the UI needs. portalLinks is off when MERCURIUS_PORTAL_LINKS is 0, as on a public
+/// demo whose Management Portal isn't reachable.
+ClassMethod GetConfig() As %Status
+{
+    Write {"portalLinks":(##class(Mercurius.Runtime.Settings).PortalLinks())}.%ToJSON()
     Return $$$OK
 }
 

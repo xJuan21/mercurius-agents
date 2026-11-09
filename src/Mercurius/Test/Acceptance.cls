@@ -65,6 +65,9 @@ ClassMethod Run() As %Boolean
     Kill ^Mercurius.Usage(Day)
     Set Passed = ..Check("The daily AI limit stops runs past the limit", $$$ISOK(First) && $$$ISERR(Second)) && Passed
 
+    Set Settings = "Mercurius.Runtime.Settings"
+    Set Passed = ..Check("Portal links show by default and hide when set to 0", $CLASSMETHOD(Settings, "PortalLinks", "") && '$CLASSMETHOD(Settings, "PortalLinks", "0")) && Passed
+
     Set Redacted = ##class(Mercurius.Runtime.AgentExecutor).Redact("Incorrect API key provided: sk-proj-abc123DEF456")
     Set Passed = ..Check("API keys are removed from stored errors", '(Redacted [ "abc123DEF456") && (Redacted [ "[REDACTED]")) && Passed
 

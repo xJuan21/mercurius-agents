@@ -243,7 +243,7 @@ so it's a possible later direction once the classes are no longer experimental.
 ## Hosting a public demo
 
 - Set `MERCURIUS_DAILY_AI_LIMIT` in `.env` to cap AI runs per day; over the limit, fallback rules decide.
-- Expose only `/mercurius/` through your reverse proxy or tunnel, never the Management Portal.
+- Expose only `/mercurius/` through your reverse proxy or tunnel, never the Management Portal. Set `MERCURIUS_PORTAL_LINKS=0` so the UI shows trace session numbers without links into the private portal.
 - Change the image's default passwords, and give visitors a user with only the `MercuriusUser` role.
 - Reset nightly: `echo 'Do ##class(Mercurius.Setup).ResetDemo() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP`
 

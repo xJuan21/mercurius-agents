@@ -1,4 +1,4 @@
-<div class="app" [class.dashboard]="isDashboard()">
+<div class="app" [class.dashboard]="isDashboard()" [class.with-details]="showAgentDetails()">
   <aside class="sidebar" [class.open]="menuOpen()">
     <a class="brand" routerLink="/dashboard" aria-label="Mercurius dashboard"
       ><span class="brand-mark"><img src="mercurius-logo.jpg" alt="" /></span
@@ -45,7 +45,10 @@
           <span class="status-dot"></span>IRIS portal <span class="end">↗</span>
         </a>
       } @else {
-        <span class="environment" title="The IRIS Management Portal isn't public on this deployment">
+        <span
+          class="environment"
+          title="The IRIS Management Portal isn't public on this deployment"
+        >
           <span class="status-dot"></span>IRIS production
         </span>
       }
@@ -71,7 +74,7 @@
     <router-outlet />
   </main>
 
-  @if (!isDashboard()) {
+  @if (showAgentDetails()) {
     @if (store.selected(); as agent) {
       <aside class="details" aria-label="Agent details">
         <div class="detail-profile">

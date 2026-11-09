@@ -6,7 +6,9 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { AgentStore } from '../../core/state/agent.store';
 import { PORTAL_URL, splitList } from '../../core/state/format';
@@ -37,9 +39,18 @@ export class Shell implements OnInit {
   protected readonly reviewCount = computed(
     () => this.store.openConflicts() + this.store.pendingActions(),
   );
-  protected isDashboard(): boolean {
-    return this.router.url.split('?')[0] === '/dashboard';
-  }
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+  private readonly currentPage = computed(() => this.currentUrl().split(/[?#]/)[0]);
+  protected readonly isDashboard = computed(() => this.currentPage() === '/dashboard');
+  protected readonly showAgentDetails = computed(
+    () => !!this.store.selected() && ['/chat', '/agents'].includes(this.currentPage()),
+  );
 
   protected readonly pages = [
     { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },

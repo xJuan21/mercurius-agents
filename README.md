@@ -234,6 +234,13 @@ We tested them on build 109 and kept our own `AgentRunner` operation.
 Subclassing the adapter and using its `OnAfterAgentInit` hook does give per-agent tools,
 so it's a possible later direction once the classes are no longer experimental.
 
+## Hosting a public demo
+
+- Set `MERCURIUS_DAILY_AI_LIMIT` in `.env` to cap AI runs per day; over the limit, fallback rules decide.
+- Expose only `/mercurius/` through your reverse proxy or tunnel, never the Management Portal.
+- Change the image's default passwords, and give visitors a user with only the `MercuriusUser` role.
+- Reset nightly: `echo 'Do ##class(Mercurius.Setup).ResetDemo() Halt' | docker compose exec -T iris iris session IRIS -U IRISAPP`
+
 ## Security
 
 - The runtime binds each tool to its agent, so the LLM never supplies the agent's identity.

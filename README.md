@@ -4,6 +4,9 @@ An AI operations desk for an InterSystems IRIS integration team, built on IRIS A
 Interoperability. Your team defines the agents; each one works inside a real production
 and acts only with a person's approval.
 
+**Live demo:** https://mercurius.juan-mota.com/mercurius/ (sign-in details for judges on request). It
+resets nightly at 09:00 UTC and is capped at 400 AI runs a day.
+
 ![Documenter finds a contradiction and proposes a fix](docs/screenshots/chat-documenter.png)
 
 ## The problem
@@ -207,6 +210,7 @@ refresh token stays in `sessionStorage`, so it ends with the browser tab.
 | Bonus | Where to see it |
 |---|---|
 | Docker | `Dockerfile` and `docker-compose.yml`: `docker compose up -d --build` |
+| Online demo | https://mercurius.juan-mota.com/mercurius/, live with real models, added 2026-11-09 |
 | IPM (ZPM) | `module.xml`: `zpm "install mercurius-agents"` installs the backend, and `zpm "mercurius-agents test"` runs the tests |
 | AI Hub bugs | [ai-hub-eap-bugreports #25](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/25): a tool hidden by `%CanList` is rejected with no audit record. [#26](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/26): `iris-main` aborts with exit 134 when the working directory isn't writable |
 

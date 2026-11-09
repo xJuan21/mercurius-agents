@@ -30,7 +30,7 @@ ClassMethod ServeFile(pFile As %String) As %Status
     Set Extension = $ZCONVERT($PIECE(pFile, ".", *), "L")
     Set %response.ContentType = $CASE(Extension,
         "html":"text/html", "js":"text/javascript", "css":"text/css", "ico":"image/x-icon",
-        "svg":"image/svg+xml", "json":"application/json", "txt":"text/plain", :"application/octet-stream")
+        "jpg":"image/jpeg", "png":"image/png", "svg":"image/svg+xml", "json":"application/json", "txt":"text/plain", :"application/octet-stream")
     Set %response.CharSet = "utf-8"
     Set %response.NoCharSetConvert = 1
     Do:(Extension = "html") %response.SetHeader("Cache-Control", "no-cache")

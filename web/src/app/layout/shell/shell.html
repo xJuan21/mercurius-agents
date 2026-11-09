@@ -1,6 +1,9 @@
-<div class="app">
+<div class="app" [class.dashboard]="isDashboard()">
   <aside class="sidebar" [class.open]="menuOpen()">
-    <div class="brand"><span class="logo">m</span>mercurius<span class="dot-accent">.</span></div>
+    <a class="brand" routerLink="/dashboard" aria-label="Mercurius dashboard"
+      ><span class="brand-mark"><img src="mercurius-logo.jpg" alt="" /></span
+      ><span>MERCURIUS</span></a
+    >
 
     <div>
       <div class="label">WORKSPACE</div>
@@ -23,7 +26,11 @@
     <div>
       <div class="label">YOUR AGENTS</div>
       @for (agent of store.agents(); track agent.Name) {
-        <button class="agent-short" [class.current]="agent.Name === store.selected()?.Name" (click)="chooseAgent(agent.Name)">
+        <button
+          class="agent-short"
+          [class.current]="agent.Name === store.selected()?.Name"
+          (click)="chooseAgent(agent.Name)"
+        >
           <app-icon [name]="agent.Symbol" />
           {{ agent.Name }}
           <span class="status-dot" [class.off]="agent.Enabled != 1"></span>
@@ -50,53 +57,68 @@
 
   <main class="main">
     <div class="topbar">
-      <button class="mobile-menu" aria-label="Open navigation" (click)="menuOpen.set(true)">☰</button>
+      <button class="mobile-menu" aria-label="Open navigation" (click)="menuOpen.set(true)">
+        ☰
+      </button>
       <span class="tagline">Intelligent companions. Powerful workflows.</span>
     </div>
     <router-outlet />
   </main>
 
-  @if (store.selected(); as agent) {
-    <aside class="details" aria-label="Agent details">
-      <div class="detail-profile">
-        <div class="agent-icon"><app-icon [name]="agent.Symbol" /></div>
-        <h2>{{ agent.Name }}</h2>
-        <p>{{ agent.Role }}</p>
-      </div>
-      <section>
-        <h3>Purpose</h3>
-        <p>{{ agent.Description }}</p>
-      </section>
-      <section>
-        <h3>Tone of voice</h3>
-        <span class="badge">{{ agent.Tone }}</span>
-      </section>
-      <section>
-        <h3>Decisions</h3>
-        <p>{{ agent.AllowedDecisions }}</p>
-        @if (agent.ReviewDecisions) {
-          <p class="review-note">Needs a person: {{ agent.ReviewDecisions }}</p>
-        }
-      </section>
-      <section>
-        <h3>Permitted tools</h3>
-        @for (tool of selectedTools(); track tool) {
-          <div class="tool-item"><app-icon name="shield" /><span>{{ store.toolLabel(tool) }}</span></div>
-        } @empty {
-          <p>No tools granted.</p>
-        }
-      </section>
-      <section>
-        <h3>When the AI is unavailable</h3>
-        <p>{{ ruleCount() ? ruleCount() + ' fallback rules decide, and a person reviews.' : 'No fallback rules: a person decides.' }}</p>
-      </section>
-      <section>
-        <h3>Model</h3>
-        <div class="tool-item"><app-icon name="spark" /><span>{{ agent.ModelName }}</span><small>{{ agent.ProviderName }}</small></div>
-      </section>
-      <button class="btn edit" (click)="store.form.set(agent)">Edit agent configuration</button>
-      <p class="note">Agent findings are suggestions for you to review.</p>
-    </aside>
+  @if (!isDashboard()) {
+    @if (store.selected(); as agent) {
+      <aside class="details" aria-label="Agent details">
+        <div class="detail-profile">
+          <div class="agent-icon"><app-icon [name]="agent.Symbol" /></div>
+          <h2>{{ agent.Name }}</h2>
+          <p>{{ agent.Role }}</p>
+        </div>
+        <section>
+          <h3>Purpose</h3>
+          <p>{{ agent.Description }}</p>
+        </section>
+        <section>
+          <h3>Tone of voice</h3>
+          <span class="badge">{{ agent.Tone }}</span>
+        </section>
+        <section>
+          <h3>Decisions</h3>
+          <p>{{ agent.AllowedDecisions }}</p>
+          @if (agent.ReviewDecisions) {
+            <p class="review-note">Needs a person: {{ agent.ReviewDecisions }}</p>
+          }
+        </section>
+        <section>
+          <h3>Permitted tools</h3>
+          @for (tool of selectedTools(); track tool) {
+            <div class="tool-item">
+              <app-icon name="shield" /><span>{{ store.toolLabel(tool) }}</span>
+            </div>
+          } @empty {
+            <p>No tools granted.</p>
+          }
+        </section>
+        <section>
+          <h3>When the AI is unavailable</h3>
+          <p>
+            {{
+              ruleCount()
+                ? ruleCount() + ' fallback rules decide, and a person reviews.'
+                : 'No fallback rules: a person decides.'
+            }}
+          </p>
+        </section>
+        <section>
+          <h3>Model</h3>
+          <div class="tool-item">
+            <app-icon name="spark" /><span>{{ agent.ModelName }}</span
+            ><small>{{ agent.ProviderName }}</small>
+          </div>
+        </section>
+        <button class="btn edit" (click)="store.form.set(agent)">Edit agent configuration</button>
+        <p class="note">Agent findings are suggestions for you to review.</p>
+      </aside>
+    }
   }
 </div>
 

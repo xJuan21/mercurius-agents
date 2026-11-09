@@ -19,6 +19,7 @@ export class Login {
     user: ['', Validators.required],
     password: ['', Validators.required],
   });
+  protected readonly showPassword = signal(false);
   protected readonly busy = signal(false);
   protected readonly error = signal('');
 
@@ -31,12 +32,14 @@ export class Login {
     this.busy.set(true);
     this.error.set('');
     this.auth.login(user, password).subscribe({
-      next: () => this.router.navigate(['/chat']),
+      next: () => this.router.navigate(['/dashboard']),
       error: (failure: HttpErrorResponse) => {
         this.busy.set(false);
         this.form.controls.password.reset();
         this.error.set(
-          failure.status === 401 ? 'That username or password is incorrect.' : 'Sign-in is unavailable. Check that IRIS is running.',
+          failure.status === 401
+            ? 'That username or password is incorrect.'
+            : 'Sign-in is unavailable. Check that IRIS is running.',
         );
       },
     });

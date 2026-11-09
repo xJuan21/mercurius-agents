@@ -1,0 +1,129 @@
+<div class="overview" [attr.aria-busy]="loading()">
+  <header class="hero">
+    <div>
+      <h1>Workspace overview</h1>
+      <p>Your agent activity, at a glance.</p>
+    </div>
+    <button class="btn refresh" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Refreshing…' : 'Refresh' }}
+    </button>
+  </header>
+  @if (error()) {
+    <p class="error" role="alert">
+      {{ error() }}
+      @if (loaded()) {
+        <span>Showing the last successful snapshot.</span>
+      }
+    </p>
+  }
+  @if (!loaded() && loading()) {
+    <p class="empty" role="status">Loading your workspace…</p>
+  }
+  @if (loaded()) {
+    <section class="metrics" aria-label="Workspace totals">
+      <a class="metric" routerLink="/agents"
+        ><span class="icon"><app-icon name="agents" /></span>
+        <div>
+          <span>Total agents</span><strong>{{ agents().length }}</strong>
+        </div></a
+      >
+      <a class="metric" routerLink="/review"
+        ><span class="icon"><app-icon name="review" /></span>
+        <div>
+          <span>Pending reviews</span><strong>{{ summary()?.PendingActions || 0 }}</strong>
+        </div></a
+      >
+      <a class="metric" routerLink="/review"
+        ><span class="icon"><app-icon name="graph" /></span>
+        <div>
+          <span>Open conflicts</span><strong>{{ summary()?.OpenConflicts || 0 }}</strong>
+        </div></a
+      >
+    </section>
+    <div class="panels">
+      <section class="card">
+        <header>
+          <span class="icon"><app-icon name="agents" /></span>
+          <div>
+            <h2>Agent status</h2>
+            <p>Configured agents in your workspace.</p>
+          </div>
+          <a routerLink="/agents" class="pill">View agents <span aria-hidden="true">→</span></a>
+        </header>
+        @for (agent of agents(); track agent.Name) {
+          <div class="agent-row">
+            <span class="small-icon"><app-icon [name]="agent.Symbol" /></span>
+            <div class="copy">
+              <h3>{{ agent.Name }}</h3>
+              <p>{{ agent.Role }}</p>
+            </div>
+            <span class="badge" [class.ok]="agent.Enabled == 1">{{
+              agent.Enabled == 1 ? '● Enabled' : 'Disabled'
+            }}</span>
+          </div>
+        } @empty {
+          <p class="empty">No agents yet. Create one from Agents.</p>
+        }
+      </section>
+      <section class="card">
+        <header>
+          <span class="icon"><app-icon name="review" /></span>
+          <div>
+            <h2>Pending reviews</h2>
+            <p>Proposed actions awaiting your decision.</p>
+          </div>
+          <a routerLink="/review" class="pill">View all <span aria-hidden="true">→</span></a>
+        </header>
+        @for (proposal of proposals(); track proposal.Id) {
+          <div class="proposal">
+            <span class="small-icon"
+              ><app-icon [name]="proposal.ActionType === 'Notify' ? 'inbox' : 'memory'"
+            /></span>
+            <div class="copy">
+              <h3>{{ labels[proposal.ActionType] || proposal.ActionType }}</h3>
+              <span class="badge review">Waiting for approval</span>
+              <p>{{ proposal.Summary }}</p>
+              <small>{{ proposal.AgentName }}</small>
+            </div>
+            <a routerLink="/review" class="pill">Review →</a>
+          </div>
+        } @empty {
+          <div class="clear">
+            @if (summary()?.PendingActions) {
+              <span class="badge review">Older actions need review</span>
+              <p>Open Review and show all actions to find earlier pending proposals.</p>
+            } @else {
+              <span class="badge ok">All caught up</span>
+              <p>No pending actions.</p>
+            }
+          </div>
+        }
+      </section>
+    </div>
+    <section class="card activity">
+      <header>
+        <span class="icon"><app-icon name="history" /></span>
+        <div>
+          <h2>Recent activity</h2>
+          <p>The latest agent executions in your workspace.</p>
+        </div>
+        <a routerLink="/history" class="pill">View history <span aria-hidden="true">→</span></a>
+      </header>
+      @for (run of executions(); track run.ExecutionId) {
+        <div class="event">
+          <span class="event-dot"></span>
+          <div class="copy">
+            <h3>
+              {{ run.AgentName }} <span>· {{ run.Status }}</span>
+            </h3>
+            <p>{{ run.Decision || run.InputSummary || 'Agent execution' }}</p>
+          </div>
+          <time>{{ run.StartedAt }}</time>
+        </div>
+      } @empty {
+        <p class="empty">No executions yet. Start a conversation in Chat.</p>
+      }
+    </section>
+    <p class="snapshot">Last refreshed {{ updated() }} · Refresh to see new activity.</p>
+  }
+</div>

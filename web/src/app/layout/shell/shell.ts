@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { AgentStore } from '../../core/state/agent.store';
@@ -23,10 +30,19 @@ export class Shell implements OnInit {
   protected readonly initials = computed(() => this.auth.username().slice(0, 2).toUpperCase());
   protected readonly selectedTools = computed(() => splitList(this.store.selected()?.Tools));
   protected readonly ruleCount = computed(
-    () => (this.store.selected()?.FallbackRules ?? '').split('\n').filter((line) => line.includes('=>')).length,
+    () =>
+      (this.store.selected()?.FallbackRules ?? '').split('\n').filter((line) => line.includes('=>'))
+        .length,
   );
-  protected readonly reviewCount = computed(() => this.store.openConflicts() + this.store.pendingActions());
+  protected readonly reviewCount = computed(
+    () => this.store.openConflicts() + this.store.pendingActions(),
+  );
+  protected isDashboard(): boolean {
+    return this.router.url.split('?')[0] === '/dashboard';
+  }
+
   protected readonly pages = [
+    { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { path: '/chat', label: 'Chat', icon: 'chat' },
     { path: '/agents', label: 'Agents', icon: 'agents' },
     { path: '/review', label: 'Review', icon: 'review' },

@@ -1,8 +1,190 @@
-.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
-.panel { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 32px; }
-.brand { font: 800 22px Manrope, sans-serif; letter-spacing: -1px; display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
-.logo { background: var(--purple); color: #fff; border-radius: 10px; width: 32px; height: 34px; display: grid; place-items: center; font-size: 22px; }
-.dot-accent { color: #b9acd9; margin-left: -10px; }
-h1 { font-size: 24px; font-weight: 750; letter-spacing: -0.5px; margin: 0; }
-.btn { width: 100%; margin-top: 20px; padding: 10px; }
-.footer { text-align: center; margin-top: 14px; }
+.login {
+  min-height: 100dvh;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: center;
+  gap: 5vw;
+  padding: 140px 5vw 90px 7.5vw;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 15% 80%, #0d2040 0, transparent 45%), #030918;
+}
+.brand {
+  position: absolute;
+  top: 35px;
+  left: 3vw;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 20px;
+  letter-spacing: 9px;
+  z-index: 1;
+}
+.mark {
+  display: block;
+  width: 82px;
+  height: 60px;
+  overflow: hidden;
+}
+.mark img {
+  width: 110px;
+  max-width: none;
+  margin: -25px 0 0 -10px;
+  mix-blend-mode: screen;
+}
+.intro {
+  z-index: 1;
+  align-self: center;
+  padding-bottom: 120px;
+}
+h1 {
+  font-size: clamp(36px, 4vw, 66px);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -2px;
+  margin: 0 0 28px;
+}
+h1 span {
+  color: #6ea6ff;
+}
+.intro p {
+  color: var(--body);
+  font-size: clamp(17px, 1.6vw, 26px);
+  line-height: 1.6;
+}
+.wave {
+  position: absolute;
+  width: 65%;
+  height: 60%;
+  bottom: -7%;
+  left: -8%;
+  background: url('/mercurius/particle-wave.svg') center/cover no-repeat;
+  pointer-events: none;
+  opacity: 0.9;
+}
+.panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 590px;
+  justify-self: center;
+  background: #0e172b;
+  border: 1px solid #19243a;
+  border-radius: 52px;
+  padding: 60px 40px 70px;
+  box-shadow: 0 24px 80px #0003;
+}
+h2 {
+  font-size: 42px;
+  margin: 0 0 16px;
+  font-weight: 650;
+}
+.subtitle {
+  color: var(--body);
+  margin: 0 0 52px;
+  font-size: 16px;
+}
+.field-label {
+  font-size: 16px;
+  margin: 24px 0 12px;
+}
+.input {
+  padding: 18px;
+  border-radius: 10px;
+  background: #101827;
+  min-height: 60px;
+}
+.password {
+  position: relative;
+}
+.password input {
+  padding-right: 60px;
+}
+.password button {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  color: var(--body);
+}
+.btn {
+  display: block;
+  width: 85%;
+  margin: 55px auto 0;
+  padding: 14px;
+  font-size: 20px;
+  border-radius: 18px;
+}
+@media (max-width: 900px) {
+  .login {
+    gap: 30px;
+    padding: 130px 5vw 60px;
+  }
+  .panel {
+    padding: 35px 25px;
+    border-radius: 30px;
+  }
+  h2 {
+    font-size: 32px;
+  }
+  .subtitle {
+    margin-bottom: 30px;
+  }
+  .intro {
+    padding-bottom: 70px;
+  }
+}
+@media (max-width: 680px) {
+  .login {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 115px 22px 40px;
+    gap: 28px;
+  }
+  .brand {
+    top: 24px;
+    left: 22px;
+    font-size: 15px;
+    letter-spacing: 5px;
+    gap: 10px;
+  }
+  .intro {
+    padding: 0;
+    align-self: stretch;
+  }
+  h1 {
+    font-size: 36px;
+    letter-spacing: -1px;
+  }
+  .intro p {
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+  .desktop {
+    display: none;
+  }
+  .panel {
+    max-width: 440px;
+    align-self: center;
+  }
+  .wave {
+    width: 150%;
+    height: 45%;
+    opacity: 0.3;
+  }
+  .btn {
+    margin-top: 30px;
+    width: 100%;
+  }
+  .subtitle {
+    font-size: 14px;
+  }
+}

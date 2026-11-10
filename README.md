@@ -7,7 +7,7 @@ and acts only with a person's approval.
 **Live demo:** https://mercurius.juan-mota.com/mercurius/ (sign-in details for judges on request). It
 resets nightly at 09:00 UTC and is capped at 400 AI runs a day.
 
-**Demo video:** [download the MP4](https://github.com/xJuan21/mercurius-agents/releases/download/media-v1/mercurius-agents-demo.mp4) (110 s, silent, with captions).
+**Demo video:** [watch on YouTube](https://youtu.be/nL0_9Cqyx8A) · [download the MP4](https://github.com/xJuan21/mercurius-agents/releases/download/media-v1/mercurius-agents-demo.mp4) (110 s, silent, with captions).
 
 ![Documenter finds a contradiction and proposes a fix](docs/screenshots/chat-documenter.png)
 

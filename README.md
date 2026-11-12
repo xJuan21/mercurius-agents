@@ -9,6 +9,8 @@ resets nightly at 09:00 UTC and is capped at 400 AI runs a day.
 
 **Demo video:** [watch on YouTube](https://youtu.be/nL0_9Cqyx8A) · [download the MP4](https://github.com/xJuan21/mercurius-agents/releases/download/media-v1/mercurius-agents-demo.mp4) (110 s, silent, with captions).
 
+**Article:** [Mercurius Agents: Running AI agents inside an IRIS Interoperability production](https://community.intersystems.com/post/mercurius-agents-running-ai-agents-inside-iris-interoperability-production) (Developer Community).
+
 ![Documenter finds a contradiction and proposes a fix](docs/screenshots/chat-documenter.png)
 
 ## The problem
